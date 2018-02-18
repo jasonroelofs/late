@@ -1,0 +1,5 @@
+{% if from_parent %}
+  {{ from_parent }}
+{% else %}
+  I don't have from_parent.
+{% end %}

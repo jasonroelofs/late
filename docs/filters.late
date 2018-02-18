@@ -1,0 +1,18 @@
+Filters convert and manipulate data for eventual output.
+
+>  {% assign value = "Testing" %}
+>  {{ value | upcase }}
+
+<  TESTING
+
+Filters can also themselves take parameters.
+
+>  {{ value | replace: "ing", with: "ers" }}
+
+<  Testers
+
+Filters can be chained together, run as many as you want!
+
+>  {{ value | replace: "ing", with: "ers" | upcase }}
+
+<  TESTERS

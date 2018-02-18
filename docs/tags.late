@@ -1,0 +1,36 @@
+Tags allow for non-output tools, like variable assignment, loops, and conditionals.
+
+>  {% assign tag = "This is assigned from a tag." %}
+>  {{ tag }}
+
+<  This is assigned from a tag.
+
+Loops
+
+>  {% assign list = "1,2,3,4,5" | split: "," %}
+>  {% for item in list %}
+>    {{ item }}
+>  {% end}
+
+<  1
+<  2
+<  3
+<  4
+<  5
+
+Conditionals
+
+>  {% assign list_size = list | size %}
+>  {% if list_size > 3 %}
+>    The list is big!
+>  {% end %}
+>
+>  {% if list_size >= 5 %}
+>    The list is really big!
+>  {% else %}
+>    The list is small
+>  {% end %}
+
+<  The list is big!
+<
+<  The list is really big!
