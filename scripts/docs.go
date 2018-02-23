@@ -7,6 +7,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
+
 	"github.com/jasonroelofs/late"
 )
 
@@ -39,7 +41,12 @@ func main() {
 		results := t.Render()
 
 		if expected != results {
-			errors = append(errors, fmt.Sprintf("%s did not render as expected", file))
+			dmp := diffmatchpatch.New()
+			diffs := dmp.DiffMain(expected, results, false)
+			errors = append(
+				errors,
+				fmt.Sprintf("%s did not render as expected\n%s", file, dmp.DiffPrettyText(diffs)),
+			)
 			continue
 		}
 
