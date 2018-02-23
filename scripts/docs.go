@@ -9,7 +9,7 @@ import (
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 
-	"github.com/jasonroelofs/late"
+	"github.com/jasonroelofs/late/template"
 )
 
 /**
@@ -37,7 +37,7 @@ func main() {
 
 	for _, file := range lateFiles {
 		testCase, expected = parseAndTestDocFile(file)
-		t := late.NewTemplate(testCase)
+		t := template.New(testCase)
 		results := t.Render()
 
 		if expected != results {

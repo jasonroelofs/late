@@ -1,17 +1,17 @@
-package late
+package template
 
 type Template struct {
 	// The raw source of the Template we're parsing and rendering
-	Body string
+	body string
 }
 
-func NewTemplate(templateBody string) *Template {
+func New(templateBody string) *Template {
 	return &Template{
-		Body: templateBody,
+		body: templateBody,
 	}
 }
 
 // Render the template, returning the final output as a string
 func (t *Template) Render() string {
-	return t.Body
+	return t.body
 }
