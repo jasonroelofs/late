@@ -3,7 +3,7 @@ package lexer
 import (
 	"testing"
 
-	"github.com/jasonroelofs/late/parser/token"
+	"github.com/jasonroelofs/late/template/token"
 )
 
 func TestTokenizesInput(t *testing.T) {
