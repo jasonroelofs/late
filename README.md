@@ -15,3 +15,7 @@ Goals of LATE
 * Great error reporting with the ability to try to render something no matter what
 * Fast
 * File format agnostic, but supports HTML-style escaping
+
+## Thanks To
+
+* Thorsten Ball and his fantastic book [Writing an Interpreter in Go](https://interpreterbook.com/).
