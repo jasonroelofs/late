@@ -23,10 +23,18 @@ type Lexer struct {
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
+	l.checkStartState()
 	return l
 }
 
-func (l *Lexer) NextToken() (tok token.Token) {
+func (l *Lexer) NextToken() token.Token {
+	var tok token.Token
+
+	if l.ch == 0 {
+		tok.Type = token.EOF
+		return tok
+	}
+
 	if l.inLiquid {
 		tok = l.parseNextLiquidToken()
 	} else {
@@ -37,24 +45,29 @@ func (l *Lexer) NextToken() (tok token.Token) {
 	return tok
 }
 
-func (l *Lexer) parseUntilLiquid() (tok token.Token) {
+func (l *Lexer) parseUntilLiquid() token.Token {
+	var tok token.Token
 	startPos := l.position
 
 	for {
-		l.readChar()
-		if l.ch == 0 || (l.ch == '{' && (l.peek() == '{' || l.peek() == '%')) {
+		if l.atLiquidStart() {
 			break
 		}
+
+		if l.ch == 0 {
+			break
+		}
+
+		l.readChar()
 	}
 
 	tok.Type = token.RAW
 	tok.Literal = l.input[startPos:l.position]
 
-	return
+	return tok
 }
 
 func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
-
 	l.skipWhitespace()
 
 	switch l.ch {
@@ -112,7 +125,7 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default:
-		if isLetter(l.ch) {
+		if isIdentifier(l.ch) {
 			tok.Type = token.IDENT
 			tok.Literal = l.readIdentifier()
 			return
@@ -128,7 +141,7 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 func (l *Lexer) readIdentifier() string {
 	startPosition := l.position
 
-	for isLetter(l.ch) {
+	for isIdentifier(l.ch) {
 		l.readChar()
 	}
 
@@ -153,15 +166,12 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' ||
-		'A' <= ch && ch <= 'Z' ||
-		'0' <= ch && ch <= '9' ||
-		ch == '_'
+func (l *Lexer) checkStartState() {
+	l.inLiquid = l.atLiquidStart()
 }
 
-func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
+func (l *Lexer) atLiquidStart() bool {
+	return (l.ch == '{' && (l.peek() == '{' || l.peek() == '%'))
 }
 
 func (l *Lexer) readChar() {
@@ -181,4 +191,15 @@ func (l *Lexer) peek() byte {
 	} else {
 		return l.input[l.peekPosition]
 	}
+}
+
+func isIdentifier(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' ||
+		'A' <= ch && ch <= 'Z' ||
+		'0' <= ch && ch <= '9' ||
+		ch == '_'
+}
+
+func newToken(tokenType token.TokenType, ch byte) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }

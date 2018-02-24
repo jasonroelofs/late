@@ -1,6 +1,7 @@
 package template
 
 import (
+	"github.com/jasonroelofs/late/template/evaluator"
 	"github.com/jasonroelofs/late/template/lexer"
 	"github.com/jasonroelofs/late/template/parser"
 )
@@ -22,7 +23,7 @@ func (t *Template) Render() string {
 	lexer := lexer.New(t.body)
 	parser := parser.New(lexer)
 
-	parsedTemplate := parser.Parse()
+	ast := parser.Parse()
 
-	return parsedTemplate
+	return evaluator.Eval(ast)
 }

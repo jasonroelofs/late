@@ -6,6 +6,11 @@ import (
 	"github.com/jasonroelofs/late/template/token"
 )
 
+type ExpectedToken struct {
+	expectedType    token.TokenType
+	expectedLiteral string
+}
+
 func TestTokenizesInput(t *testing.T) {
 	input := `
 		Raw Text {{ variable.method }}
@@ -15,7 +20,7 @@ func TestTokenizesInput(t *testing.T) {
 		So much { Not % quite { { liquid } % } here.
 		"This is stringy"
 		{{ "This is a string" | 'that is a string' }}
-	`
+		One more raw token`
 
 	// There's a lot going on here
 	// Parsing liquid is itself a stateful system. We want to keep around, untouched,
@@ -23,10 +28,7 @@ func TestTokenizesInput(t *testing.T) {
 	// Thus as we parse we need to keep track of the raw text itself, and only go into
 	// serious parsing mode when we hit {{ or {%.
 
-	tests := []struct {
-		expectedType    token.TokenType
-		expectedLiteral string
-	}{
+	tests := []ExpectedToken{
 		{token.RAW, "\n\t\tRaw Text "},
 		{token.OPEN_VAR, "{{"},
 		{token.IDENT, "variable"},
@@ -47,11 +49,66 @@ func TestTokenizesInput(t *testing.T) {
 		{token.PIPE, "|"},
 		{token.STRING, "that is a string"},
 		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\tOne more raw token"},
+		{token.EOF, ""},
 	}
 
-	l := New(input)
+	testTemplateGeneratesTokens(t, input, tests)
+}
 
-	for i, tt := range tests {
+func TestOnlyLiquidTemplates(t *testing.T) {
+	input := "{{ variable }}"
+
+	tests := []ExpectedToken{
+		{token.OPEN_VAR, "{{"},
+		{token.IDENT, "variable"},
+		{token.CLOSE_VAR, "}}"},
+		{token.EOF, ""},
+	}
+
+	testTemplateGeneratesTokens(t, input, tests)
+}
+
+func TestRawAtEOF(t *testing.T) {
+	input := `Before {{ variable }} After `
+
+	tests := []ExpectedToken{
+		{token.RAW, "Before "},
+		{token.OPEN_VAR, "{{"},
+		{token.IDENT, "variable"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, " After "},
+		{token.EOF, ""},
+	}
+
+	testTemplateGeneratesTokens(t, input, tests)
+}
+
+func TestNoLiquid(t *testing.T) {
+	input := `Before and After`
+
+	tests := []ExpectedToken{
+		{token.RAW, "Before and After"},
+		{token.EOF, ""},
+	}
+
+	testTemplateGeneratesTokens(t, input, tests)
+}
+
+func TestEmptyTemplate(t *testing.T) {
+	input := ``
+
+	tests := []ExpectedToken{
+		{token.EOF, ""},
+	}
+
+	testTemplateGeneratesTokens(t, input, tests)
+}
+
+func testTemplateGeneratesTokens(t *testing.T, template string, expectedTokens []ExpectedToken) {
+	l := New(template)
+
+	for i, tt := range expectedTokens {
 		tok := l.NextToken()
 
 		if tok.Type != tt.expectedType {
@@ -63,7 +120,3 @@ func TestTokenizesInput(t *testing.T) {
 		}
 	}
 }
-
-// So many error cases to watch out for.
-// End-of-file with anything.
-// Un-terminated strings, both quote types
