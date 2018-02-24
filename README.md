@@ -18,4 +18,5 @@ Goals of LATE
 
 ## Thanks To
 
+* [Shopify](https://www.shopify.com/) for building and open-sourcing the Liquid language.
 * Thorsten Ball and his fantastic book [Writing an Interpreter in Go](https://interpreterbook.com/).
