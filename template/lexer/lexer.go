@@ -149,11 +149,21 @@ func (l *Lexer) readIdentifier() string {
 }
 
 func (l *Lexer) readString() string {
-	// Move us past the quote mark that triggered this step
+	// Keep track of what character opened our string (' or ")
+	// so we can find our matching closing quote,
+	// making sure that we look for escaped quotes and don't prematurely
+	// end our string parsing.
+	prev := l.ch
+	openWith := l.ch
 	l.readChar()
 
 	startPosition := l.position
-	for l.ch != '"' && l.ch != '\'' {
+	for {
+		if (l.ch == openWith && prev != '\\') || l.ch == 0 {
+			break
+		}
+
+		prev = l.ch
 		l.readChar()
 	}
 

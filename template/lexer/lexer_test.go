@@ -69,6 +69,43 @@ func TestOnlyLiquidTemplates(t *testing.T) {
 	testTemplateGeneratesTokens(t, input, tests)
 }
 
+func TestLiquidStrings(t *testing.T) {
+	input := `
+		{{ "This is ' a string" }}
+		{{ 'Single \' quotes' }}
+		{{ "Double \" quotes" }}
+		{{ "New \n Lines \n here" }}
+		{{ "Other \t command chars" }}
+	`
+
+	tests := []ExpectedToken{
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"},
+		{token.STRING, "This is ' a string"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"},
+		{token.STRING, "Single \\' quotes"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"},
+		{token.STRING, "Double \\\" quotes"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"},
+		{token.STRING, "New \\n Lines \\n here"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"},
+		{token.STRING, "Other \\t command chars"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t"},
+		{token.EOF, ""},
+	}
+
+	testTemplateGeneratesTokens(t, input, tests)
+}
+
 func TestRawAtEOF(t *testing.T) {
 	input := `Before {{ variable }} After `
 
