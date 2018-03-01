@@ -19,11 +19,11 @@ func TestRender(t *testing.T) {
 	}
 }
 
-//func TestRenderWithParameters(t *testing.T) {
-//	tpl := New("This is a {{ thing }}")
-//	results := tpl.Render(Params{"thing": "template"})
-//
-//	if results != "This is a template" {
-//		t.Errorf("Failed to render the template. Expected '%s' got '%s'", "This is a template", results)
-//	}
-//}
+func TestRenderLiquidWithLiterals(t *testing.T) {
+	tpl := New("I am test # {{ 3 }}")
+	results := tpl.Render()
+
+	if results != "I am test 3" {
+		t.Errorf("Failed to render the template. Expected '%s' got '%s'", "I am a test 3", results)
+	}
+}

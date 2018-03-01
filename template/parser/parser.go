@@ -33,9 +33,9 @@ func (p *Parser) Parse() *ast.Template {
 	template := &ast.Template{}
 
 	for p.currToken.Type != token.EOF {
-		stmt := p.parseStatement()
+		stmt := p.parseNext()
 		if stmt != nil {
-			template.Statements = append(template.Statements, stmt)
+			template.AddNode(stmt)
 		}
 
 		p.nextToken()
@@ -44,10 +44,12 @@ func (p *Parser) Parse() *ast.Template {
 	return template
 }
 
-func (p *Parser) parseStatement() ast.Statement {
+func (p *Parser) parseNext() ast.Node {
 	switch p.currToken.Type {
 	case token.RAW:
 		return p.parseRawStatement()
+	case token.OPEN_VAR:
+		return p.parseExpressionStatement()
 	default:
 		return nil
 	}
@@ -55,4 +57,18 @@ func (p *Parser) parseStatement() ast.Statement {
 
 func (p *Parser) parseRawStatement() *ast.RawStatement {
 	return &ast.RawStatement{Token: p.currToken}
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	node := &ast.ExpressionStatement{Token: p.currToken}
+
+	// Skip past the opening {{
+	p.nextToken()
+
+	for p.currToken.Type != token.CLOSE_VAR {
+		// node.Tokens = append(node.Tokens, p.currToken)
+		p.nextToken()
+	}
+
+	return node
 }
