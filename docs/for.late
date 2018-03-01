@@ -1,0 +1,35 @@
+As in Liquid, when iterating through a collection with a for loop Late provides a `forloop` object that includes information about the current iteration through the collection.
+
+The available methods on this object are as follows:
+
+* forloop.first -- True if this is the first iteration
+* forloop.last -- True if this is the last iteration
+* forloop.index -- The current iteration. This number starts at 0.
+
+>  {% for run in (0..3) %}
+>    ({{ forloop.index }}) C: I was standing right here ...
+>    {% if forloop.last %}
+>      ({{ forloop.index }}) R: AAAAHHHH! *punches C in the face*
+>    {% else %}
+>      ({{ forloop.index }}) R: Wait until I've asked you a question{% if forloop.first %}.{% else %}!{% end %}
+>      ({{ forloop.index }}) C: Oh, right, sorry.
+>    {% end %}
+>  {% end %}
+
+<  (0) C: I was standing right here ...
+<  (0) R: Wait until I've asked you a question.
+<  (0) C: Oh, right, sorry.
+<  (1) C: I was standing right here ...
+<  (1) R: Wait until I've asked you a question!
+<  (1) C: Oh, right, sorry.
+<  (2) C: I was standing right here ...
+<  (2) R: Wait until I've asked you a question!
+<  (2) C: Oh, right, sorry.
+<  (3) C: I was standing right here ...
+<  (3) R: AAAAHHHH! *punches C in the face*
+
+Late also provides a few control statements for skipping to the next iteration ({% raw %}`{% continue %}{% end %}`) or exiting the loop altogether ({% raw %}`{% break %}`{% end %}).
+
+[ Example incoming ]
+
+
