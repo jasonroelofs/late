@@ -125,7 +125,11 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default:
-		if isIdentifier(l.ch) {
+		if isNumber(l.ch) {
+			tok.Type = token.NUMBER
+			tok.Literal = l.readNumber()
+			return
+		} else if isIdentifier(l.ch) {
 			tok.Type = token.IDENT
 			tok.Literal = l.readIdentifier()
 			return
@@ -136,6 +140,21 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 	l.readChar()
 
 	return
+}
+
+func (l *Lexer) readNumber() string {
+	startPosition := l.position
+
+	// We don't currently support starting a float number
+	// without a leading number
+	notFirst := false
+
+	for isNumber(l.ch) || (notFirst && l.ch == '.') {
+		l.readChar()
+		notFirst = true
+	}
+
+	return l.input[startPosition:l.position]
 }
 
 func (l *Lexer) readIdentifier() string {
@@ -201,6 +220,10 @@ func (l *Lexer) peek() byte {
 	} else {
 		return l.input[l.peekPosition]
 	}
+}
+
+func isNumber(ch byte) bool {
+	return '0' <= ch && ch <= '9'
 }
 
 func isIdentifier(ch byte) bool {

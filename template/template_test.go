@@ -19,25 +19,25 @@ func TestRender(t *testing.T) {
 	}
 }
 
-func TestRenderLiquidWithLiterals(t *testing.T) {
-	tests := []struct {
-		liquidInput    string
-		expectedOutput string
-	}{
-		{"{{ 3 }}", "3"},
-		{"{{ 1 + 2 }}", "3"},
-		{"{{ 1 - 2 }}", "-2"},
-		{"{{ 1 / 2 }}", "0.5"},
-		{"{{ \"Hi\" }}", "Hi"},
-		{"{{ 'Hi' + ' ' + 'Bye' }}", "Hi Bye"},
-	}
-
-	for _, test := range tests {
-		tpl := New(test.liquidInput)
-		results := tpl.Render()
-
-		if results != test.expectedOutput {
-			t.Errorf("Failed to render the template. Expected '%s' got '%s'", test.expectedOutput, results)
-		}
-	}
-}
+//func TestRenderLiquidWithLiterals(t *testing.T) {
+//	tests := []struct {
+//		liquidInput    string
+//		expectedOutput string
+//	}{
+//		{"{{ 3 }}", "3"},
+//		{"{{ 1 + 2 }}", "3"},
+//		{"{{ 1 - 2 }}", "-2"},
+//		{"{{ 1 / 2 }}", "0.5"},
+//		{"{{ \"Hi\" }}", "Hi"},
+//		{"{{ 'Hi' + ' ' + 'Bye' }}", "Hi Bye"},
+//	}
+//
+//	for _, test := range tests {
+//		tpl := New(test.liquidInput)
+//		results := tpl.Render()
+//
+//		if results != test.expectedOutput {
+//			t.Errorf("Failed to render the template. Expected '%s' got '%s'", test.expectedOutput, results)
+//		}
+//	}
+//}

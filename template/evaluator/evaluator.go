@@ -9,8 +9,8 @@ import (
 func Eval(template *ast.Template) string {
 	buffer := strings.Builder{}
 
-	for _, node := range template.Nodes {
-		buffer.WriteString(node.String())
+	for _, stmt := range template.Statements {
+		buffer.WriteString(stmt.String())
 	}
 
 	return buffer.String()

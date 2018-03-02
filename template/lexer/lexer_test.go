@@ -19,7 +19,7 @@ func TestTokenizesInput(t *testing.T) {
 		{% end %}
 		So much { Not % quite { { liquid } % } here.
 		"This is stringy"
-		{{ "This is a string" | 'that is a string' }}
+		{{ "This is a string" | 'that is a string' | 100 | 437.6 }}
 		One more raw token`
 
 	// There's a lot going on here
@@ -48,6 +48,10 @@ func TestTokenizesInput(t *testing.T) {
 		{token.STRING, "This is a string"},
 		{token.PIPE, "|"},
 		{token.STRING, "that is a string"},
+		{token.PIPE, "|"},
+		{token.NUMBER, "100"},
+		{token.PIPE, "|"},
+		{token.NUMBER, "437.6"},
 		{token.CLOSE_VAR, "}}"},
 		{token.RAW, "\n\t\tOne more raw token"},
 		{token.EOF, ""},

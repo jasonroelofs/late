@@ -32,20 +32,20 @@ type Expression interface {
 	expressionNode()
 }
 
-// Template is always the root node of the AST
+// Template is always the root node of the AST.
 type Template struct {
-	Nodes []Node
+	Statements []Statement
 }
 
-func (t *Template) AddNode(node Node) {
-	t.Nodes = append(t.Nodes, node)
+func (t *Template) AddStatement(stmt Statement) {
+	t.Statements = append(t.Statements, stmt)
 }
 
 func (t *Template) String() string {
 	builder := strings.Builder{}
 
-	for _, n := range t.Nodes {
-		builder.WriteString(n.String())
+	for _, stmt := range t.Statements {
+		builder.WriteString(stmt.String())
 	}
 
 	return builder.String()
@@ -63,14 +63,22 @@ type RawStatement struct {
 func (r *RawStatement) statementNode() {}
 func (r *RawStatement) String() string { return r.Token.Literal }
 
-type VariableExpression struct {
+type VariableStatement struct {
 	// First token of the statement
 	Token      token.Token
 	Expression Expression
 }
 
-func (v *VariableExpression) statementNode() {}
-func (v *VariableExpression) String() string { return "" }
+func (v *VariableStatement) statementNode() {}
+func (v *VariableStatement) String() string { return "" }
+
+type Identifier struct {
+	Token token.Token
+	Value string
+}
+
+func (i *Identifier) expressionNode() {}
+func (i *Identifier) String() string  { return i.Value }
 
 type NumberLiteral struct {
 	Token token.Token
