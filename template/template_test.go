@@ -20,10 +20,24 @@ func TestRender(t *testing.T) {
 }
 
 func TestRenderLiquidWithLiterals(t *testing.T) {
-	tpl := New("I am test # {{ 3 }}")
-	results := tpl.Render()
+	tests := []struct {
+		liquidInput    string
+		expectedOutput string
+	}{
+		{"{{ 3 }}", "3"},
+		{"{{ 1 + 2 }}", "3"},
+		{"{{ 1 - 2 }}", "-2"},
+		{"{{ 1 / 2 }}", "0.5"},
+		{"{{ \"Hi\" }}", "Hi"},
+		{"{{ 'Hi' + ' ' + 'Bye' }}", "Hi Bye"},
+	}
 
-	if results != "I am test 3" {
-		t.Errorf("Failed to render the template. Expected '%s' got '%s'", "I am a test 3", results)
+	for _, test := range tests {
+		tpl := New(test.liquidInput)
+		results := tpl.Render()
+
+		if results != test.expectedOutput {
+			t.Errorf("Failed to render the template. Expected '%s' got '%s'", test.expectedOutput, results)
+		}
 	}
 }

@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/jasonroelofs/late/template/ast"
 	"github.com/jasonroelofs/late/template/lexer"
 	"github.com/jasonroelofs/late/template/token"
@@ -11,6 +14,8 @@ type Parser struct {
 
 	currToken token.Token
 	peekToken token.Token
+
+	Errors []string
 }
 
 func New(lexer *lexer.Lexer) *Parser {
@@ -49,7 +54,7 @@ func (p *Parser) parseNext() ast.Node {
 	case token.RAW:
 		return p.parseRawStatement()
 	case token.OPEN_VAR:
-		return p.parseExpressionStatement()
+		return p.parseVariableExpression()
 	default:
 		return nil
 	}
@@ -59,16 +64,52 @@ func (p *Parser) parseRawStatement() *ast.RawStatement {
 	return &ast.RawStatement{Token: p.currToken}
 }
 
-func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	node := &ast.ExpressionStatement{Token: p.currToken}
+func (p *Parser) parseVariableExpression() *ast.VariableExpression {
+	node := &ast.VariableExpression{Token: p.currToken}
+
+	if !p.expectPeek(token.IDENT, token.CLOSE_VAR) {
+		return nil
+	}
 
 	// Skip past the opening {{
 	p.nextToken()
 
-	for p.currToken.Type != token.CLOSE_VAR {
-		// node.Tokens = append(node.Tokens, p.currToken)
+	for p.currToken.Type != token.CLOSE_VAR && p.currToken.Type != token.EOF {
 		p.nextToken()
 	}
 
+	if p.currToken.Type != token.CLOSE_VAR {
+		p.parserError(p.currToken.Type, token.CLOSE_VAR)
+	}
+
 	return node
+}
+
+func (p *Parser) expectPeek(allowed ...token.TokenType) bool {
+	matched := false
+	currPeek := p.peekToken.Type
+
+	for _, allowedType := range allowed {
+		if currPeek == allowedType {
+			matched = true
+		}
+	}
+
+	if !matched {
+		p.parserError(currPeek, allowed...)
+
+		return false
+	}
+
+	return true
+}
+
+func (p *Parser) parserError(got token.TokenType, expected ...token.TokenType) {
+	var tokenNames []string
+	for _, t := range expected {
+		tokenNames = append(tokenNames, string(t))
+	}
+
+	msg := fmt.Sprintf("expected %s, found %s", strings.Join(tokenNames, " or "), got)
+	p.Errors = append(p.Errors, msg)
 }

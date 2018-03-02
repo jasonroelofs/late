@@ -63,14 +63,14 @@ type RawStatement struct {
 func (r *RawStatement) statementNode() {}
 func (r *RawStatement) String() string { return r.Token.Literal }
 
-type ExpressionStatement struct {
+type VariableExpression struct {
 	// First token of the statement
 	Token      token.Token
 	Expression Expression
 }
 
-func (v *ExpressionStatement) statementNode() {}
-func (v *ExpressionStatement) String() string { return "" }
+func (v *VariableExpression) statementNode() {}
+func (v *VariableExpression) String() string { return "" }
 
 type NumberLiteral struct {
 	Token token.Token

@@ -13,6 +13,7 @@ func TestRawTemplates(t *testing.T) {
 	p := New(l)
 
 	template := p.Parse()
+	checkParserErrors(t, p)
 
 	if template == nil {
 		t.Fatalf("Parse() returned nil")
@@ -26,6 +27,31 @@ func TestRawTemplates(t *testing.T) {
 
 	if stmt.String() != "This is a raw template\nIt has no liquid code whatsoever" {
 		t.Fatalf("Raw statement not correct. got='%s'", stmt.String())
+	}
+}
+
+func TestParserErrors(t *testing.T) {
+	tests := []struct {
+		input    string
+		errorStr string
+	}{
+		{"{{ %}", "expected IDENT or CLOSE_VAR, found CLOSE_TAG"},
+		{"{{", "expected IDENT or CLOSE_VAR, found EOF"},
+		{"{{ foobar ", "expected CLOSE_VAR, found EOF"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p := New(l)
+		p.Parse()
+
+		if len(p.Errors) != 1 {
+			t.Fatalf("Parser did not find errors when it should have")
+		}
+
+		if p.Errors[0] != test.errorStr {
+			t.Fatalf("Wrong error. Wanted: \"%s\" Got: \"%s\"", test.errorStr, p.Errors[0])
+		}
 	}
 }
 
@@ -67,4 +93,18 @@ func TestBasicLiquid(t *testing.T) {
 	if program != input {
 		t.Fatalf("The rendered result didn't match the input. got '%s'", program)
 	}
+}
+
+func checkParserErrors(t *testing.T, p *Parser) {
+	errors := p.Errors
+	if len(errors) == 0 {
+		return
+	}
+
+	t.Errorf("Parser has %d errors", len(errors))
+	for _, msg := range errors {
+		t.Errorf("Parser error %q", msg)
+	}
+
+	t.FailNow()
 }
