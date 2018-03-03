@@ -118,6 +118,10 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 		tok = newToken(token.TIMES, l.ch)
 	case '/':
 		tok = newToken(token.SLASH, l.ch)
+	case '(':
+		tok = newToken(token.LPAREN, l.ch)
+	case ')':
+		tok = newToken(token.RPAREN, l.ch)
 	case '>':
 		if l.peek() == '=' {
 			tok = newTokenW(token.GT_EQ, ">=")
