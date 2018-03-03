@@ -14,8 +14,8 @@ import (
 const (
 	_ int = iota
 	LOWEST
-	PIPE    // '|' (filter seperator)
 	ASSIGN  // =
+	PIPE    // '|' (filter seperator)
 	EQUALS  // ==, !=
 	COMPARE // <, >, <=, >=
 	SUM     // +, -
@@ -24,6 +24,8 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
+	token.ASSIGN: ASSIGN,
+	token.PIPE:   PIPE,
 	token.EQ:     EQUALS,
 	token.NOT_EQ: EQUALS,
 	token.LT:     COMPARE,
