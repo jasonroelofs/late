@@ -73,21 +73,17 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 	switch l.ch {
 	case '{':
 		if l.peek() == '{' {
-			tok.Type = token.OPEN_VAR
-			tok.Literal = "{{"
+			tok = newTokenW(token.OPEN_VAR, "{{")
 			l.readChar()
 		} else if l.peek() == '%' {
-			tok.Type = token.OPEN_TAG
-			tok.Literal = "{%"
+			tok = newTokenW(token.OPEN_TAG, "{%")
 			l.readChar()
 		} else {
 			tok = newToken(token.LBRACKET, l.ch)
 		}
 	case '}':
 		if l.peek() == '}' {
-			tok.Type = token.CLOSE_VAR
-			tok.Literal = "}}"
-
+			tok = newTokenW(token.CLOSE_VAR, "}}")
 			l.readChar()
 			l.inLiquid = false
 		} else {
@@ -95,9 +91,7 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 		}
 	case '%':
 		if l.peek() == '}' {
-			tok.Type = token.CLOSE_TAG
-			tok.Literal = "%}"
-
+			tok = newTokenW(token.CLOSE_TAG, "%}")
 			l.readChar()
 			l.inLiquid = false
 		} else {
@@ -114,10 +108,45 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 		tok = newToken(token.COMMA, l.ch)
 	case ':':
 		tok = newToken(token.COLON, l.ch)
-	case '=':
-		tok = newToken(token.ASSIGN, l.ch)
 	case '|':
 		tok = newToken(token.PIPE, l.ch)
+	case '-':
+		tok = newToken(token.MINUS, l.ch)
+	case '+':
+		tok = newToken(token.PLUS, l.ch)
+	case '*':
+		tok = newToken(token.TIMES, l.ch)
+	case '/':
+		tok = newToken(token.SLASH, l.ch)
+	case '>':
+		if l.peek() == '=' {
+			tok = newTokenW(token.GT_EQ, ">=")
+			l.readChar()
+		} else {
+			tok = newToken(token.GT, l.ch)
+		}
+	case '<':
+		if l.peek() == '=' {
+			tok = newTokenW(token.LT_EQ, "<=")
+			l.readChar()
+		} else {
+			tok = newToken(token.LT, l.ch)
+		}
+	case '=':
+		if l.peek() == '=' {
+			tok = newTokenW(token.EQ, "==")
+			l.readChar()
+		} else {
+			tok = newToken(token.ASSIGN, l.ch)
+		}
+	case '!':
+		if l.peek() == '=' {
+			tok = newTokenW(token.NOT_EQ, "!=")
+			l.readChar()
+		} else {
+			// We don't currently support prefix !
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 	case '"', '\'':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
@@ -234,5 +263,9 @@ func isIdentifier(ch byte) bool {
 }
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
+	return newTokenW(tokenType, string(ch))
+}
+
+func newTokenW(tokenType token.TokenType, tok string) token.Token {
+	return token.Token{Type: tokenType, Literal: tok}
 }

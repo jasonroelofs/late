@@ -19,7 +19,8 @@ func TestTokenizesInput(t *testing.T) {
 		{% end %}
 		So much { Not % quite { { liquid } % } here.
 		"This is stringy"
-		{{ "This is a string" | 'that is a string' | 100 | 437.6 }}
+		{{ "This is a string" | 'that is a string' | 100 | -437.6 }}
+		{{ 1 < 2 > 3 <= 4 >= 5 * 6 + 7 - 8 / 9 == 0 != 10 }}
 		One more raw token`
 
 	// There's a lot going on here
@@ -51,7 +52,32 @@ func TestTokenizesInput(t *testing.T) {
 		{token.PIPE, "|"},
 		{token.NUMBER, "100"},
 		{token.PIPE, "|"},
+		{token.MINUS, "-"},
 		{token.NUMBER, "437.6"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"},
+		{token.NUMBER, "1"},
+		{token.LT, "<"},
+		{token.NUMBER, "2"},
+		{token.GT, ">"},
+		{token.NUMBER, "3"},
+		{token.LT_EQ, "<="},
+		{token.NUMBER, "4"},
+		{token.GT_EQ, ">="},
+		{token.NUMBER, "5"},
+		{token.TIMES, "*"},
+		{token.NUMBER, "6"},
+		{token.PLUS, "+"},
+		{token.NUMBER, "7"},
+		{token.MINUS, "-"},
+		{token.NUMBER, "8"},
+		{token.SLASH, "/"},
+		{token.NUMBER, "9"},
+		{token.EQ, "=="},
+		{token.NUMBER, "0"},
+		{token.NOT_EQ, "!="},
+		{token.NUMBER, "10"},
 		{token.CLOSE_VAR, "}}"},
 		{token.RAW, "\n\t\tOne more raw token"},
 		{token.EOF, ""},

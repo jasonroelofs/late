@@ -64,13 +64,60 @@ func (r *RawStatement) statementNode() {}
 func (r *RawStatement) String() string { return r.Token.Literal }
 
 type VariableStatement struct {
-	// First token of the statement
 	Token      token.Token
 	Expression Expression
 }
 
 func (v *VariableStatement) statementNode() {}
-func (v *VariableStatement) String() string { return "" }
+func (v *VariableStatement) String() string {
+	// TODO This case should never be possible. Will probably solve itself
+	// as the rest of the parser fleshes itself out.
+	// This is causing panics in `make docs` as it's trying to parse and print out
+	// parts of liquid we don't parse into the tree yet.
+	if v != nil {
+		return v.Expression.String()
+	} else {
+		return ""
+	}
+}
+
+type PrefixExpression struct {
+	Token    token.Token
+	Operator string
+	Right    Expression
+}
+
+func (p *PrefixExpression) expressionNode() {}
+func (p *PrefixExpression) String() string {
+	out := strings.Builder{}
+
+	out.WriteString("(")
+	out.WriteString(p.Operator)
+	out.WriteString(p.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (i *InfixExpression) expressionNode() {}
+func (i *InfixExpression) String() string {
+	out := strings.Builder{}
+
+	out.WriteString("(")
+	out.WriteString(i.Left.String())
+	out.WriteString(" " + i.Operator + " ")
+	out.WriteString(i.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
 
 type Identifier struct {
 	Token token.Token
