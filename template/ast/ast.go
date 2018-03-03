@@ -146,3 +146,11 @@ func (s *StringLiteral) expressionNode() {}
 func (s *StringLiteral) String() string {
 	return fmt.Sprintf("\"%s\"", s.Token.Literal)
 }
+
+type BooleanLiteral struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *BooleanLiteral) expressionNode() {}
+func (b *BooleanLiteral) String() string  { return b.Token.Literal }

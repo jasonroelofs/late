@@ -21,6 +21,7 @@ func TestTokenizesInput(t *testing.T) {
 		"This is stringy"
 		{{ "This is a string" | 'that is a string' | 100 | -437.6 }}
 		{{ 1 < 2 > 3 <= 4 >= 5 * 6 + 7 - 8 / 9 == 0 != 10 }}
+		{{ true | false }}
 		One more raw token`
 
 	// There's a lot going on here
@@ -78,6 +79,12 @@ func TestTokenizesInput(t *testing.T) {
 		{token.NUMBER, "0"},
 		{token.NOT_EQ, "!="},
 		{token.NUMBER, "10"},
+		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"},
+		{token.TRUE, "true"},
+		{token.PIPE, "|"},
+		{token.FALSE, "false"},
 		{token.CLOSE_VAR, "}}"},
 		{token.RAW, "\n\t\tOne more raw token"},
 		{token.EOF, ""},

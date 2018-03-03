@@ -159,8 +159,15 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 			tok.Literal = l.readNumber()
 			return
 		} else if isIdentifier(l.ch) {
-			tok.Type = token.IDENT
 			tok.Literal = l.readIdentifier()
+			switch tok.Literal {
+			case "true":
+				tok.Type = token.TRUE
+			case "false":
+				tok.Type = token.FALSE
+			default:
+				tok.Type = token.IDENT
+			}
 			return
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)

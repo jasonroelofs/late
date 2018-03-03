@@ -10,18 +10,14 @@ import (
 func TestRawTemplates(t *testing.T) {
 	input := "This is a raw template\nIt has no liquid code whatsoever"
 
-	l := lexer.New(input)
-	p := New(l)
-
-	template := p.Parse()
-	checkParserErrors(t, p)
+	template := parseTest(t, input)
 
 	if template == nil {
 		t.Fatalf("Parse() returned nil")
 	}
 
 	if len(template.Statements) != 1 {
-		t.Fatalf("Parsing built the wrong number of nodes. got=%d", len(template.Statements))
+		t.Fatalf("Parsing built the wrong number of statements. got=%d", len(template.Statements))
 	}
 
 	stmt := template.Statements[0]
@@ -61,11 +57,7 @@ func TestRawTemplates(t *testing.T) {
 func TestIdentifierExpression(t *testing.T) {
 	input := "{{ te }}"
 
-	l := lexer.New(input)
-	p := New(l)
-
-	template := p.Parse()
-	checkParserErrors(t, p)
+	template := parseTest(t, input)
 
 	if len(template.Statements) != 1 {
 		t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
@@ -76,25 +68,14 @@ func TestIdentifierExpression(t *testing.T) {
 		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
 	}
 
-	ident, ok := stmt.Expression.(*ast.Identifier)
-	if !ok {
-		t.Fatalf("Expression not an IDENT, got %T", stmt.Expression)
-	}
-
-	if ident.Value != "te" {
-		t.Fatalf("Identifier has the wrong name, got %s", ident.Value)
-	}
+	checkIdentifierExpression(t, stmt.Expression, "te")
 }
 
-func TestNumberExpression(t *testing.T) {
+func TestNumberLiteral(t *testing.T) {
 	input := "{{ 400 }} {{ 3.1415 }}"
 	// TODO test invalid numbers
 
-	l := lexer.New(input)
-	p := New(l)
-
-	template := p.Parse()
-	checkParserErrors(t, p)
+	template := parseTest(t, input)
 
 	if len(template.Statements) != 3 {
 		t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
@@ -105,14 +86,7 @@ func TestNumberExpression(t *testing.T) {
 		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
 	}
 
-	ident, ok := stmt.Expression.(*ast.NumberLiteral)
-	if !ok {
-		t.Fatalf("Expression not a NUMBER, got %T", stmt.Expression)
-	}
-
-	if ident.Value != 400 {
-		t.Fatalf("Identifier has the wrong name, got %f", ident.Value)
-	}
+	checkNumberExpression(t, stmt.Expression, 400)
 
 	// The 2nd statement is a Raw node between the two
 
@@ -121,13 +95,38 @@ func TestNumberExpression(t *testing.T) {
 		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
 	}
 
-	ident, ok = stmt.Expression.(*ast.NumberLiteral)
-	if !ok {
-		t.Fatalf("Expression not a NUMBER, got %T", stmt.Expression)
+	checkNumberExpression(t, stmt.Expression, 3.1415)
+}
+
+func TestBooleanLiteral(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"{{ true }}", true},
+		{"{{ false }}", false},
 	}
 
-	if ident.Value != 3.1415 {
-		t.Fatalf("Identifier has the wrong name, got %f", ident.Value)
+	for _, test := range tests {
+		template := parseTest(t, test.input)
+
+		if len(template.Statements) != 1 {
+			t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
+		}
+
+		stmt, ok := template.Statements[0].(*ast.VariableStatement)
+		if !ok {
+			t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.BooleanLiteral)
+		if !ok {
+			t.Fatalf("stmt is not a BooleanLiteral, got %T", stmt.Expression)
+		}
+
+		if exp.Value != test.expected {
+			t.Fatalf("BooleanLiteral has wrong value, expected %t got %t", test.expected, exp.Value)
+		}
 	}
 }
 
@@ -142,11 +141,7 @@ func TestPrefixExpressions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		l := lexer.New(test.input)
-		p := New(l)
-
-		template := p.Parse()
-		checkParserErrors(t, p)
+		template := parseTest(t, test.input)
 
 		if len(template.Statements) != 1 {
 			t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
@@ -192,11 +187,7 @@ func TestInfixExpressions(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		l := lexer.New(test.input)
-		p := New(l)
-
-		template := p.Parse()
-		checkParserErrors(t, p)
+		template := parseTest(t, test.input)
 
 		if len(template.Statements) != 1 {
 			t.Fatalf("(%d) Template did not have the right number of statements, got %d", i, len(template.Statements))
@@ -212,19 +203,13 @@ func TestInfixExpressions(t *testing.T) {
 			t.Fatalf("(%d) stmt is not an InfixExpression, got %T", i, stmt.Expression)
 		}
 
-		left, ok := exp.Left.(*ast.NumberLiteral)
-		if left.Value != test.leftValue {
-			t.Fatalf("(%d) Left wasn't a Number. Got %T", i, exp.Left)
-		}
+		checkNumberExpression(t, exp.Left, test.leftValue)
 
 		if exp.Operator != test.operator {
 			t.Fatalf("Operator was wrong, expected '%s' got '%s'", test.operator, exp.Operator)
 		}
 
-		right, ok := exp.Right.(*ast.NumberLiteral)
-		if right.Value != test.rightValue {
-			t.Fatalf("(%d) Right wasn't a Number. Got %T", i, exp.Right)
-		}
+		checkNumberExpression(t, exp.Right, test.rightValue)
 	}
 }
 
@@ -242,16 +227,44 @@ func TestOperatorPrecedence(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		l := lexer.New(test.input)
-		p := New(l)
-
-		template := p.Parse()
-		checkParserErrors(t, p)
+		template := parseTest(t, test.input)
 
 		got := template.String()
 		if got != test.expected {
 			t.Errorf("Precedence result wrong. Expected '%s', got '%s'", test.expected, got)
 		}
+	}
+}
+
+func parseTest(t *testing.T, input string) *ast.Template {
+	l := lexer.New(input)
+	p := New(l)
+
+	template := p.Parse()
+	checkParserErrors(t, p)
+
+	return template
+}
+
+func checkNumberExpression(t *testing.T, exp ast.Expression, expected float64) {
+	number, ok := exp.(*ast.NumberLiteral)
+	if !ok {
+		t.Fatalf("Expression not NUMBER, got %T", exp)
+	}
+
+	if number.Value != expected {
+		t.Fatalf("Number has the wrong value. Expected '%f' got '%f'", expected, number.Value)
+	}
+}
+
+func checkIdentifierExpression(t *testing.T, exp ast.Expression, expected string) {
+	ident, ok := exp.(*ast.Identifier)
+	if !ok {
+		t.Fatalf("Expression not IDENT, got %T", exp)
+	}
+
+	if ident.Value != expected {
+		t.Fatalf("Identifier has the wrong name, expected '%s' got '%s'", expected, ident.Value)
 	}
 }
 

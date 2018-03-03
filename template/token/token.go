@@ -26,6 +26,9 @@ const (
 	LSQUARE  = "LSQUARE"
 	RSQUARE  = "RSQUARE"
 
+	TRUE  = "TRUE"
+	FALSE = "FALSE"
+
 	DOT     = "DOT"
 	COMMA   = "COMMA"
 	COLON   = "COLON"
