@@ -1,6 +1,8 @@
 package template
 
 import (
+	"strings"
+
 	"github.com/jasonroelofs/late/template/evaluator"
 	"github.com/jasonroelofs/late/template/lexer"
 	"github.com/jasonroelofs/late/template/parser"
@@ -22,8 +24,14 @@ func New(templateBody string) *Template {
 func (t *Template) Render() string {
 	lexer := lexer.New(t.body)
 	parser := parser.New(lexer)
-
 	ast := parser.Parse()
+	eval := evaluator.New(ast)
 
-	return evaluator.Eval(ast)
+	final := strings.Builder{}
+
+	for _, obj := range eval.Run() {
+		final.WriteString(obj.Inspect())
+	}
+
+	return final.String()
 }
