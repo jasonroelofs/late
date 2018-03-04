@@ -5,6 +5,10 @@ import (
 	"github.com/jasonroelofs/late/template/object"
 )
 
+var (
+	NULL = &object.Null{}
+)
+
 type Evaluator struct {
 	template *ast.Template
 }
@@ -47,7 +51,7 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 		return &object.Number{Value: node.Value}
 
 	default:
-		return nil
+		return NULL
 	}
 }
 
@@ -56,7 +60,7 @@ func (e *Evaluator) evalInfix(operator string, left, right object.Object) object
 	case left.Type() == object.OBJ_NUMBER && right.Type() == object.OBJ_NUMBER:
 		return e.evalNumberOperation(operator, left, right)
 	default:
-		return nil
+		return NULL
 	}
 }
 
@@ -74,7 +78,7 @@ func (e *Evaluator) evalNumberOperation(operator string, left, right object.Obje
 	case "/":
 		return &object.Number{Value: leftVal / rightVal}
 	default:
-		return nil
+		return NULL
 	}
 }
 
@@ -83,7 +87,7 @@ func (e *Evaluator) evalPrefix(operator string, right object.Object) object.Obje
 	case right.Type() == object.OBJ_NUMBER:
 		return e.evalNumberPrefix(operator, right)
 	default:
-		return nil
+		return NULL
 	}
 }
 

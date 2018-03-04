@@ -7,6 +7,7 @@ import (
 type ObjectType string
 
 const (
+	OBJ_NULL   = "NULL"
 	OBJ_NUMBER = "NUMBER"
 	OBJ_STRING = "STRING"
 )
@@ -15,6 +16,11 @@ type Object interface {
 	Type() ObjectType
 	Inspect() string
 }
+
+type Null struct{}
+
+func (n *Null) Type() ObjectType { return OBJ_NULL }
+func (n *Null) Inspect() string  { return "null" }
 
 type Number struct {
 	Value float64
