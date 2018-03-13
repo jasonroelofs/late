@@ -10,6 +10,7 @@ const (
 	OBJ_NULL   = "NULL"
 	OBJ_NUMBER = "NUMBER"
 	OBJ_STRING = "STRING"
+	OBJ_BOOL   = "BOOLEAN"
 )
 
 type Object interface {
@@ -35,3 +36,16 @@ type String struct {
 
 func (i *String) Type() ObjectType { return OBJ_STRING }
 func (i *String) Inspect() string  { return i.Value }
+
+type Boolean struct {
+	Value bool
+}
+
+func (b *Boolean) Type() ObjectType { return OBJ_BOOL }
+func (b *Boolean) Inspect() string {
+	if b.Value {
+		return "true"
+	} else {
+		return "false"
+	}
+}

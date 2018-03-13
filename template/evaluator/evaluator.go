@@ -6,7 +6,9 @@ import (
 )
 
 var (
-	NULL = &object.Null{}
+	NULL  = &object.Null{}
+	TRUE  = &object.Boolean{Value: true}
+	FALSE = &object.Boolean{Value: false}
 )
 
 type Evaluator struct {
@@ -47,8 +49,15 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 		right := e.eval(node.Right)
 		return e.evalPrefix(node.Operator, right)
 
+	// Literals
 	case *ast.NumberLiteral:
 		return &object.Number{Value: node.Value}
+
+	case *ast.BooleanLiteral:
+		return convertBoolean(node.Value)
+
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
 
 	default:
 		return NULL
@@ -59,6 +68,8 @@ func (e *Evaluator) evalInfix(operator string, left, right object.Object) object
 	switch {
 	case left.Type() == object.OBJ_NUMBER && right.Type() == object.OBJ_NUMBER:
 		return e.evalNumberOperation(operator, left, right)
+	case operator == "==":
+		return convertBoolean(left == right)
 	default:
 		return NULL
 	}
@@ -77,6 +88,14 @@ func (e *Evaluator) evalNumberOperation(operator string, left, right object.Obje
 		return &object.Number{Value: leftVal * rightVal}
 	case "/":
 		return &object.Number{Value: leftVal / rightVal}
+	case ">":
+		return convertBoolean(leftVal > rightVal)
+	case "<":
+		return convertBoolean(leftVal < rightVal)
+	case ">=":
+		return convertBoolean(leftVal >= rightVal)
+	case "<=":
+		return convertBoolean(leftVal <= rightVal)
 	default:
 		return NULL
 	}
@@ -99,5 +118,13 @@ func (e *Evaluator) evalNumberPrefix(operator string, right object.Object) objec
 		}
 	default:
 		return right
+	}
+}
+
+func convertBoolean(value bool) object.Object {
+	if value {
+		return TRUE
+	} else {
+		return FALSE
 	}
 }

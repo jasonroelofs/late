@@ -130,6 +130,40 @@ func TestBooleanLiteral(t *testing.T) {
 	}
 }
 
+func TestStringLiteral(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`{{ "A string" }}`, "A string"},
+		{`{{ 'Single Quotes' }}`, "Single Quotes"},
+		{`{{ "Mixe'd Quotes" }}`, "Mixe'd Quotes"},
+		{`{{ 'Escape\'d Quotes' }}`, "Escape\\'d Quotes"},
+	}
+
+	for _, test := range tests {
+		template := parseTest(t, test.input)
+
+		if len(template.Statements) != 1 {
+			t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
+		}
+
+		stmt, ok := template.Statements[0].(*ast.VariableStatement)
+		if !ok {
+			t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.StringLiteral)
+		if !ok {
+			t.Fatalf("stmt is not a StringLiteral, got %T", stmt.Expression)
+		}
+
+		if exp.Value != test.expected {
+			t.Fatalf("StringLiteral has wrong value, expected %s got %s", test.expected, exp.Value)
+		}
+	}
+}
+
 func TestPrefixExpressions(t *testing.T) {
 	tests := []struct {
 		input    string

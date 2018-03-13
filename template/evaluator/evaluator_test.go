@@ -3,7 +3,6 @@ package evaluator
 import (
 	"testing"
 
-	_ "github.com/jasonroelofs/late/template/ast"
 	"github.com/jasonroelofs/late/template/lexer"
 	"github.com/jasonroelofs/late/template/object"
 	"github.com/jasonroelofs/late/template/parser"
@@ -61,11 +60,65 @@ func TestNumbers(t *testing.T) {
 }
 
 func TestBooleans(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"{{ true }}", true},
+		{"{{ false }}", false},
+		{"{{ true == true }}", true},
+		{"{{ true == false }}", false},
+		{"{{ 1 < 2 }}", true},
+		{"{{ 2 > 5 }}", false},
+		{"{{ 3 <= 3 }}", true},
+		{"{{ 4 >= 5 }}", false},
+	}
 
+	for i, test := range tests {
+		results := evalInput(test.input)
+
+		if len(results) != 1 {
+			t.Fatalf("(%d) Got the wrong number of results, got %d", i, len(results))
+		}
+
+		boolean, ok := results[0].(*object.Boolean)
+		if !ok {
+			t.Fatalf("(%d) Expected a Boolean, got %T", i, results)
+		}
+
+		if boolean.Value != test.expected {
+			t.Fatalf("(%d) The eval came through wrong, got '%v'", i, boolean.Value)
+		}
+	}
 }
 
 func TestStrings(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`{{ "A string" }}`, "A string"},
+		{`{{ 'Single Quotes' }}`, "Single Quotes"},
+		{`{{ "Mixe'd Quotes" }}`, "Mixe'd Quotes"},
+		{`{{ 'Escape\'d Quotes' }}`, "Escape\\'d Quotes"},
+	}
 
+	for i, test := range tests {
+		results := evalInput(test.input)
+
+		if len(results) != 1 {
+			t.Fatalf("(%d) Got the wrong number of results, got %d", i, len(results))
+		}
+
+		str, ok := results[0].(*object.String)
+		if !ok {
+			t.Fatalf("(%d) Expected a String, got %T", i, results)
+		}
+
+		if str.Value != test.expected {
+			t.Fatalf("(%d) The eval came through wrong, got '%v'", i, str.Value)
+		}
+	}
 }
 
 func evalInput(input string) []object.Object {

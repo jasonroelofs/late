@@ -70,15 +70,7 @@ type VariableStatement struct {
 
 func (v *VariableStatement) statementNode() {}
 func (v *VariableStatement) String() string {
-	// TODO This case should never be possible. Will probably solve itself
-	// as the rest of the parser fleshes itself out.
-	// This is causing panics in `make docs` as it's trying to parse and print out
-	// parts of liquid we don't parse into the tree yet.
-	if v != nil {
-		return v.Expression.String()
-	} else {
-		return ""
-	}
+	return v.Expression.String()
 }
 
 type PrefixExpression struct {
