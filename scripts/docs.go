@@ -36,6 +36,7 @@ func main() {
 	var expected string
 
 	for _, file := range lateFiles {
+		fmt.Printf("Rendering %s\n", file)
 		testCase, expected = parseAndTestDocFile(file)
 		t := template.New(testCase)
 		results := t.Render()

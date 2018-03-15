@@ -1,6 +1,7 @@
 package template
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/jasonroelofs/late/template/evaluator"
@@ -25,6 +26,18 @@ func (t *Template) Render() string {
 	lexer := lexer.New(t.body)
 	parser := parser.New(lexer)
 	ast := parser.Parse()
+
+	if len(parser.Errors) > 0 {
+		fmt.Println("There were errors parsing the document")
+
+		for _, msg := range parser.Errors {
+			fmt.Println(msg)
+		}
+
+		// For now, just return the original document.
+		return t.body
+	}
+
 	eval := evaluator.New(ast)
 
 	final := strings.Builder{}
