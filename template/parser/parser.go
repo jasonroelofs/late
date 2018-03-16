@@ -78,6 +78,7 @@ func New(lexer *lexer.Lexer) *Parser {
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
 	p.registerInfix(token.TIMES, p.parseInfixExpression)
+	p.registerInfix(token.PIPE, p.parseFilterExpression)
 
 	// Read the first two tokens to pre-fill
 	// curr and peek token values
@@ -204,6 +205,28 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	precedence := p.currPrecedence()
 	p.nextToken()
 	expression.Right = p.parseExpression(precedence)
+
+	return expression
+}
+
+func (p *Parser) parseFilterExpression(input ast.Expression) ast.Expression {
+	expression := &ast.FilterExpression{
+		Token: p.currToken,
+		Input: input,
+	}
+
+	precedence := p.currPrecedence()
+	p.nextToken()
+	expression.Filter = p.parseFilter(precedence)
+
+	return expression
+}
+
+func (p *Parser) parseFilter(precedence int) ast.Expression {
+	expression := &ast.FilterLiteral{
+		Token: p.currToken,
+		Name:  p.currToken.Literal,
+	}
 
 	return expression
 }

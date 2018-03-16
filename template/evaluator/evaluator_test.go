@@ -121,6 +121,37 @@ func TestStrings(t *testing.T) {
 	}
 }
 
+//func TestFilters(t *testing.T) {
+//	tests := []struct {
+//		input    string
+//		expected string
+//	}{
+//		{`{{ "A String" | upcase }}`, "A STRING"},
+//		{`{{ "A String" | size }}`, "8"},
+//		{`{{ "A String" | upcase | size }}`, "8"},
+//		// TODO: Unknown filter
+//		//   Strict: error out
+//		//   Lax: treat as a pass-through no-op, trigger a warning
+//	}
+//
+//	for i, test := range tests {
+//		results := evalInput(test.input)
+//
+//		if len(results) != 1 {
+//			t.Fatalf("(%d) Got the wrong number of results, got %d", i, len(results))
+//		}
+//
+//		str, ok := results[0].(*object.String)
+//		if !ok {
+//			t.Fatalf("(%d) Expected a String, got %T", i, results)
+//		}
+//
+//		if str.Value != test.expected {
+//			t.Fatalf("(%d) The eval came through wrong, got '%v'", i, str.Value)
+//		}
+//	}
+//}
+
 func evalInput(input string) []object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)

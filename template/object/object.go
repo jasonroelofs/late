@@ -11,6 +11,13 @@ const (
 	OBJ_NUMBER = "NUMBER"
 	OBJ_STRING = "STRING"
 	OBJ_BOOL   = "BOOLEAN"
+	OBJ_FILTER = "FILTER"
+)
+
+var (
+	NULL  = &Null{}
+	TRUE  = &Boolean{Value: true}
+	FALSE = &Boolean{Value: false}
 )
 
 type Object interface {
@@ -49,3 +56,10 @@ func (b *Boolean) Inspect() string {
 		return "false"
 	}
 }
+
+type Filter struct {
+	Name string
+}
+
+func (f *Filter) Type() ObjectType { return OBJ_FILTER }
+func (f *Filter) Inspect() string  { return f.Name }

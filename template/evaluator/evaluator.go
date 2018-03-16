@@ -5,12 +5,6 @@ import (
 	"github.com/jasonroelofs/late/template/object"
 )
 
-var (
-	NULL  = &object.Null{}
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
-)
-
 type Evaluator struct {
 	template *ast.Template
 }
@@ -49,6 +43,11 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 		right := e.eval(node.Right)
 		return e.evalPrefix(node.Operator, right)
 
+	case *ast.FilterExpression:
+		input := e.eval(node.Input)
+		filter := e.eval(node.Filter)
+		return e.evalFilter(input, filter)
+
 	// Literals
 	case *ast.NumberLiteral:
 		return &object.Number{Value: node.Value}
@@ -59,8 +58,11 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
 
+	case *ast.FilterLiteral:
+		return &object.Filter{Name: node.Name}
+
 	default:
-		return NULL
+		return object.NULL
 	}
 }
 
@@ -71,7 +73,7 @@ func (e *Evaluator) evalInfix(operator string, left, right object.Object) object
 	case operator == "==":
 		return convertBoolean(left == right)
 	default:
-		return NULL
+		return object.NULL
 	}
 }
 
@@ -97,7 +99,7 @@ func (e *Evaluator) evalNumberOperation(operator string, left, right object.Obje
 	case "<=":
 		return convertBoolean(leftVal <= rightVal)
 	default:
-		return NULL
+		return object.NULL
 	}
 }
 
@@ -106,7 +108,7 @@ func (e *Evaluator) evalPrefix(operator string, right object.Object) object.Obje
 	case right.Type() == object.OBJ_NUMBER:
 		return e.evalNumberPrefix(operator, right)
 	default:
-		return NULL
+		return object.NULL
 	}
 }
 
@@ -121,10 +123,21 @@ func (e *Evaluator) evalNumberPrefix(operator string, right object.Object) objec
 	}
 }
 
+func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
+	//	filterFunc := e.Context.FindFilter(filter.(*object.Filter).Name)
+	//
+	//	if filterFunc == nil {
+	//		return object.NULL
+	//	}
+	//
+	//	return object.FromNativeType(filterFunc.Call(input))
+	return object.NULL
+}
+
 func convertBoolean(value bool) object.Object {
 	if value {
-		return TRUE
+		return object.TRUE
 	} else {
-		return FALSE
+		return object.FALSE
 	}
 }

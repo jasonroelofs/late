@@ -261,6 +261,10 @@ func TestOperatorPrecedence(t *testing.T) {
 		// Explicit grouping
 		{"{{ (3 + 2) * 6 }}", "((3 + 2) * 6)"},
 		{"{{ a + (b - c) * c}}", "(a + ((b - c) * c))"},
+		// PIPE needs to be super low
+		{"{{ a | size }}", "(a | size)"},
+		{"{{ b | upcase | size }}", "((b | upcase) | size)"},
+		{"{{ 5 * 6 + 1 | filter }}", "(((5 * 6) + 1) | filter)"},
 	}
 
 	for _, test := range tests {
@@ -270,6 +274,40 @@ func TestOperatorPrecedence(t *testing.T) {
 		if got != test.expected {
 			t.Errorf("Precedence result wrong. Expected '%s', got '%s'", test.expected, got)
 		}
+	}
+}
+
+func TestFilters(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedVar    string
+		operator       string
+		expectedFilter string
+	}{
+		{`{{ "A String" | upcase }}`, "A String", "|", "upcase"},
+		{`{{ "A String" | size }}`, "A String", "|", "size"},
+	}
+
+	for i, test := range tests {
+		template := parseTest(t, test.input)
+
+		if len(template.Statements) != 1 {
+			t.Fatalf("(%d) Template did not have the right number of statements, got %d", i, len(template.Statements))
+		}
+
+		stmt, ok := template.Statements[0].(*ast.VariableStatement)
+		if !ok {
+			t.Fatalf("(%d) Template statement was the wrong type, got %T", i, template.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.FilterExpression)
+		if !ok {
+			t.Fatalf("(%d) stmt is not an InfixExpression, got %T", i, stmt.Expression)
+		}
+
+		checkStringLiteral(t, exp.Input, test.expectedVar)
+
+		checkFilterLiteral(t, exp.Filter, test.expectedFilter)
 	}
 }
 
@@ -291,6 +329,28 @@ func checkNumberExpression(t *testing.T, exp ast.Expression, expected float64) {
 
 	if number.Value != expected {
 		t.Fatalf("Number has the wrong value. Expected '%f' got '%f'", expected, number.Value)
+	}
+}
+
+func checkStringLiteral(t *testing.T, exp ast.Expression, expected string) {
+	str, ok := exp.(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("Expression not STRING, got %T", exp)
+	}
+
+	if str.Value != expected {
+		t.Fatalf("String has the wrong value. Expected '%s', got '%s'", expected, str.Value)
+	}
+}
+
+func checkFilterLiteral(t *testing.T, exp ast.Expression, expected string) {
+	filter, ok := exp.(*ast.FilterLiteral)
+	if !ok {
+		t.Fatalf("Expression not FILTER, got %T", exp)
+	}
+
+	if filter.Name != expected {
+		t.Fatalf("Filter has the wrong name, expected '%s' got '%s'", expected, filter.Name)
 	}
 }
 

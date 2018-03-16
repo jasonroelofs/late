@@ -111,6 +111,38 @@ func (i *InfixExpression) String() string {
 	return out.String()
 }
 
+// FilterExpression is the parent expression holder node that
+// keeps track of filter requests. Specifically, it references
+// the "input" side and the "filter" side of a call like:
+//
+//   {{ input | filter }}
+//
+// This is almost identical to an InfixExpression but it's handy
+// to have an explicit type for this when it comes to evaluation.
+type FilterExpression struct {
+	Token  token.Token
+	Input  Expression
+	Filter Expression
+}
+
+func (f *FilterExpression) expressionNode() {}
+func (f *FilterExpression) String() string {
+	out := strings.Builder{}
+
+	out.WriteString("(")
+	out.WriteString(f.Input.String())
+	out.WriteString(" | ")
+	out.WriteString(f.Filter.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
+/**
+ * Literals
+ * These AST nodes evaluate to themselves
+ */
+
 type Identifier struct {
 	Token token.Token
 	Value string
@@ -146,3 +178,11 @@ type BooleanLiteral struct {
 
 func (b *BooleanLiteral) expressionNode() {}
 func (b *BooleanLiteral) String() string  { return b.Token.Literal }
+
+type FilterLiteral struct {
+	Token token.Token
+	Name  string
+}
+
+func (f *FilterLiteral) expressionNode() {}
+func (f *FilterLiteral) String() string  { return f.Name }
