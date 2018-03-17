@@ -302,13 +302,50 @@ func TestFilters(t *testing.T) {
 
 		exp, ok := stmt.Expression.(*ast.FilterExpression)
 		if !ok {
-			t.Fatalf("(%d) stmt is not an InfixExpression, got %T", i, stmt.Expression)
+			t.Fatalf("(%d) stmt is not a FilterExpression, got %T", i, stmt.Expression)
 		}
 
 		checkStringLiteral(t, exp.Input, test.expectedVar)
 
 		checkFilterLiteral(t, exp.Filter, test.expectedFilter)
 	}
+}
+
+func TestFiltersWithParameters(t *testing.T) {
+	input := `{{ "Hello Mom" | replace: "Mom", with: "World" }}`
+	template := parseTest(t, input)
+
+	stmt, ok := template.Statements[0].(*ast.VariableStatement)
+	if !ok {
+		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*ast.FilterExpression)
+	if !ok {
+		t.Fatalf("stmt is not a FilterExpression, got %T", stmt.Expression)
+	}
+
+	checkFilterLiteral(t, exp.Filter, "replace")
+	filter := exp.Filter.(*ast.FilterLiteral)
+
+	params := filter.Parameters
+	if len(params) != 2 {
+		t.Fatalf("Wrong number of parameters, got %d", len(params))
+	}
+
+	expr, ok := params["replace"]
+	if !ok {
+		t.Fatalf("Didn't set the initial `replace` parameter")
+	}
+
+	checkStringLiteral(t, expr, "Mom")
+
+	expr, ok = params["with"]
+	if !ok {
+		t.Fatalf("Didn't set the explicit `with` parameter")
+	}
+
+	checkStringLiteral(t, expr, "World")
 }
 
 func parseTest(t *testing.T, input string) *ast.Template {

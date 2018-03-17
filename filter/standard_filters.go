@@ -9,9 +9,10 @@ import (
 func ApplyStandardFilters(container FilterContainer) {
 	container.AddFilter("size", size)
 	container.AddFilter("upcase", upcase)
+	container.AddFilter("replace", replace)
 }
 
-func size(input object.Object) object.Object {
+func size(input object.Object, _ Parameters) object.Object {
 	switch input.Type() {
 	case object.OBJ_STRING:
 		return object.New(len(input.Value().(string)))
@@ -20,11 +21,23 @@ func size(input object.Object) object.Object {
 	}
 }
 
-func upcase(input object.Object) object.Object {
+func upcase(input object.Object, _ Parameters) object.Object {
 	switch inputT := input.Value().(type) {
 	case string:
 		return object.New(strings.ToUpper(inputT))
 	default:
 		return input
 	}
+}
+
+func replace(input object.Object, params Parameters) object.Object {
+	// TODO Type checking and verification that the parameters are in-fact
+	// Strings and will work here.
+	in := input.Value().(string)
+	replace := params["replace"].Value().(string)
+	with := params["with"].Value().(string)
+
+	out := strings.Replace(in, replace, with, -1)
+
+	return object.New(out)
 }

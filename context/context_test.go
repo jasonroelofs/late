@@ -3,13 +3,14 @@ package context
 import (
 	"testing"
 
+	"github.com/jasonroelofs/late/filter"
 	"github.com/jasonroelofs/late/object"
 )
 
 func TestAddAndFindingFilters(t *testing.T) {
 	c := New()
 
-	c.AddFilter("size", func(input object.Object) object.Object {
+	c.AddFilter("size", func(input object.Object, _ filter.Parameters) object.Object {
 		switch inputT := input.Value().(type) {
 		case string:
 			return object.New(len(inputT))
@@ -18,13 +19,13 @@ func TestAddAndFindingFilters(t *testing.T) {
 		}
 	})
 
-	filter := c.FindFilter("size")
+	method := c.FindFilter("size")
 
-	if filter == nil {
+	if method == nil {
 		t.Fatalf("Unable to find filter with name size")
 	}
 
-	resultObj := filter.Call(object.New("String"))
+	resultObj := method.Call(object.New("String"), make(filter.Parameters))
 
 	if resultObj.Type() != object.OBJ_NUMBER {
 		t.Fatalf("The resulting object is not a number, got %T", resultObj)

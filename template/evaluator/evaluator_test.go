@@ -11,7 +11,7 @@ import (
 func TestRawStatements(t *testing.T) {
 	input := "This is a raw, non-liquid template"
 
-	results := evalInput(input)
+	results := evalInput(t, input)
 
 	if len(results) != 1 {
 		t.Fatalf("Got the wrong number of results, got %d", len(results))
@@ -42,7 +42,7 @@ func TestNumbers(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		results := evalInput(test.input)
+		results := evalInput(t, test.input)
 
 		if len(results) != 1 {
 			t.Fatalf("(%d) Got the wrong number of results, got %d", i, len(results))
@@ -75,7 +75,7 @@ func TestBooleans(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		results := evalInput(test.input)
+		results := evalInput(t, test.input)
 
 		if len(results) != 1 {
 			t.Fatalf("(%d) Got the wrong number of results, got %d", i, len(results))
@@ -104,7 +104,7 @@ func TestStrings(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		results := evalInput(test.input)
+		results := evalInput(t, test.input)
 
 		if len(results) != 1 {
 			t.Fatalf("(%d) Got the wrong number of results, got %d", i, len(results))
@@ -130,13 +130,14 @@ func TestFilters(t *testing.T) {
 		{`{{ "A String" | size }}`, object.OBJ_NUMBER, float64(8)},
 		{`{{ "A String" | upcase }}`, object.OBJ_STRING, "A STRING"},
 		{`{{ "A String" | upcase | size }}`, object.OBJ_NUMBER, float64(8)},
+		{`{{ "Hello Mom" | replace: "Mom", with: "World" }}`, object.OBJ_STRING, "Hello World"},
 		// TODO: Unknown filter
 		//   Strict: error out
 		//   Lax: treat as a pass-through no-op, trigger a warning
 	}
 
 	for i, test := range tests {
-		results := evalInput(test.input)
+		results := evalInput(t, test.input)
 
 		if len(results) != 1 {
 			t.Fatalf("(%d) Got the wrong number of results, got %d", i, len(results))
@@ -164,10 +165,19 @@ func TestFilters(t *testing.T) {
 	}
 }
 
-func evalInput(input string) []object.Object {
+func evalInput(t *testing.T, input string) []object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
-	t := p.Parse()
-	e := New(t)
+	tpl := p.Parse()
+
+	if len(p.Errors) > 0 {
+		for _, msg := range p.Errors {
+			t.Errorf("Parser error %q", msg)
+		}
+
+		t.FailNow()
+	}
+
+	e := New(tpl)
 	return e.Run()
 }

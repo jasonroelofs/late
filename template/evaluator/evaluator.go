@@ -65,10 +65,7 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 		return object.New(node.Value)
 
 	case *ast.FilterLiteral:
-		// Need to be explicit here as we want an object.Filter,
-		// not a String. This will improve as we add arguments and flesh out
-		// what filters are
-		return &object.Filter{Name: node.Name}
+		return e.evalFilterLiteral(node)
 
 	default:
 		return object.NULL
@@ -130,15 +127,30 @@ func (e *Evaluator) evalNumberPrefix(operator string, right object.Object) objec
 	}
 }
 
+func (e *Evaluator) evalFilterLiteral(node *ast.FilterLiteral) object.Object {
+	filterObj := &object.Filter{
+		Name:       node.Name,
+		Parameters: make(map[string]object.Object),
+	}
+
+	for paramName, paramExp := range node.Parameters {
+		filterObj.Parameters[paramName] = e.eval(paramExp)
+	}
+
+	return filterObj
+}
+
 func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
-	filterName := filter.Value().(string)
+	filterName := filter.(*object.Filter).Name
+	filterParams := filter.(*object.Filter).Parameters
+
 	filterFunc := e.Context.FindFilter(filterName)
 
 	if filterFunc == nil {
 		return object.NULL
 	}
 
-	return filterFunc.Call(input)
+	return filterFunc.Call(input, filterParams)
 }
 
 func convertBoolean(value bool) object.Object {

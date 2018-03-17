@@ -55,7 +55,8 @@ func (b *Boolean) Inspect() string {
 }
 
 type Filter struct {
-	Name string
+	Name       string
+	Parameters map[string]Object
 }
 
 func (f *Filter) Type() ObjectType   { return OBJ_FILTER }

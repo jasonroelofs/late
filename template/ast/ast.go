@@ -180,8 +180,9 @@ func (b *BooleanLiteral) expressionNode() {}
 func (b *BooleanLiteral) String() string  { return b.Token.Literal }
 
 type FilterLiteral struct {
-	Token token.Token
-	Name  string
+	Token      token.Token
+	Name       string
+	Parameters map[string]Expression
 }
 
 func (f *FilterLiteral) expressionNode() {}

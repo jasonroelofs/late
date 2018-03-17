@@ -215,20 +215,50 @@ func (p *Parser) parseFilterExpression(input ast.Expression) ast.Expression {
 		Input: input,
 	}
 
-	precedence := p.currPrecedence()
 	p.nextToken()
-	expression.Filter = p.parseFilter(precedence)
+	expression.Filter = p.parseFilter()
 
 	return expression
 }
 
-func (p *Parser) parseFilter(precedence int) ast.Expression {
+func (p *Parser) parseFilter() ast.Expression {
 	expression := &ast.FilterLiteral{
 		Token: p.currToken,
 		Name:  p.currToken.Literal,
 	}
 
+	if p.peekTokenIs(token.COLON) {
+		p.nextToken()
+		p.nextToken()
+		expression.Parameters = p.parseFilterParameters(expression.Name)
+	}
+
 	return expression
+}
+
+func (p *Parser) parseFilterParameters(initialParam string) map[string]ast.Expression {
+	list := make(map[string]ast.Expression)
+
+	list[initialParam] = p.parseExpression(LOWEST)
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+
+		// Error check, we should be on an identifier
+		paramName := p.currToken.Literal
+
+		if !p.peekTokenIs(token.COLON) {
+			// Error something here, must have a colon after the name
+		}
+
+		p.nextToken()
+		p.nextToken()
+
+		list[paramName] = p.parseExpression(LOWEST)
+	}
+
+	return list
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
