@@ -1,11 +1,21 @@
 package object
 
-func FromNativeType(input interface{}) Object {
+type ObjectType string
+
+type Object interface {
+	Type() ObjectType
+	Value() interface{}
+	Inspect() string
+}
+
+func New(input interface{}) Object {
 	switch input := convertToNative(input).(type) {
 	case float64:
-		return &Number{Value: float64(input)}
+		return &Number{value: float64(input)}
 	case string:
-		return &String{Value: input}
+		return &String{value: input}
+	case bool:
+		return &Boolean{value: input}
 	default:
 		return NULL
 	}

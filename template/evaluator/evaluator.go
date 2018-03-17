@@ -1,16 +1,22 @@
 package evaluator
 
 import (
+	"github.com/jasonroelofs/late/context"
+	"github.com/jasonroelofs/late/object"
 	"github.com/jasonroelofs/late/template/ast"
-	"github.com/jasonroelofs/late/template/object"
 )
 
 type Evaluator struct {
+	Context *context.Context
+
 	template *ast.Template
 }
 
 func New(template *ast.Template) *Evaluator {
-	return &Evaluator{template: template}
+	return &Evaluator{
+		template: template,
+		Context:  context.New(),
+	}
 }
 
 func (e *Evaluator) Run() []object.Object {
@@ -28,7 +34,7 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	// Top-level Statements
 	case *ast.RawStatement:
-		return &object.String{Value: node.String()}
+		return object.New(node.String())
 
 	case *ast.VariableStatement:
 		return e.eval(node.Expression)
@@ -50,15 +56,18 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 
 	// Literals
 	case *ast.NumberLiteral:
-		return &object.Number{Value: node.Value}
+		return object.New(node.Value)
 
 	case *ast.BooleanLiteral:
 		return convertBoolean(node.Value)
 
 	case *ast.StringLiteral:
-		return &object.String{Value: node.Value}
+		return object.New(node.Value)
 
 	case *ast.FilterLiteral:
+		// Need to be explicit here as we want an object.Filter,
+		// not a String. This will improve as we add arguments and flesh out
+		// what filters are
 		return &object.Filter{Name: node.Name}
 
 	default:
@@ -78,18 +87,18 @@ func (e *Evaluator) evalInfix(operator string, left, right object.Object) object
 }
 
 func (e *Evaluator) evalNumberOperation(operator string, left, right object.Object) object.Object {
-	leftVal := left.(*object.Number).Value
-	rightVal := right.(*object.Number).Value
+	leftVal := left.Value().(float64)
+	rightVal := right.Value().(float64)
 
 	switch operator {
 	case "+":
-		return &object.Number{Value: leftVal + rightVal}
+		return object.New(leftVal + rightVal)
 	case "-":
-		return &object.Number{Value: leftVal - rightVal}
+		return object.New(leftVal - rightVal)
 	case "*":
-		return &object.Number{Value: leftVal * rightVal}
+		return object.New(leftVal * rightVal)
 	case "/":
-		return &object.Number{Value: leftVal / rightVal}
+		return object.New(leftVal / rightVal)
 	case ">":
 		return convertBoolean(leftVal > rightVal)
 	case "<":
@@ -115,23 +124,21 @@ func (e *Evaluator) evalPrefix(operator string, right object.Object) object.Obje
 func (e *Evaluator) evalNumberPrefix(operator string, right object.Object) object.Object {
 	switch operator {
 	case "-":
-		return &object.Number{
-			Value: right.(*object.Number).Value * -1,
-		}
+		return object.New(right.Value().(float64) * -1)
 	default:
 		return right
 	}
 }
 
 func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
-	//	filterFunc := e.Context.FindFilter(filter.(*object.Filter).Name)
-	//
-	//	if filterFunc == nil {
-	//		return object.NULL
-	//	}
-	//
-	//	return object.FromNativeType(filterFunc.Call(input))
-	return object.NULL
+	filterName := filter.Value().(string)
+	filterFunc := e.Context.FindFilter(filterName)
+
+	if filterFunc == nil {
+		return object.NULL
+	}
+
+	return filterFunc.Call(input)
 }
 
 func convertBoolean(value bool) object.Object {
