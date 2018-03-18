@@ -11,14 +11,7 @@ func TestRawTemplates(t *testing.T) {
 	input := "This is a raw template\nIt has no liquid code whatsoever"
 
 	template := parseTest(t, input)
-
-	if template == nil {
-		t.Fatalf("Parse() returned nil")
-	}
-
-	if len(template.Statements) != 1 {
-		t.Fatalf("Parsing built the wrong number of statements. got=%d", len(template.Statements))
-	}
+	checkStatementCount(t, template, 1)
 
 	stmt := template.Statements[0]
 
@@ -58,16 +51,9 @@ func TestIdentifierExpression(t *testing.T) {
 	input := "{{ te }}"
 
 	template := parseTest(t, input)
+	checkStatementCount(t, template, 1)
 
-	if len(template.Statements) != 1 {
-		t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
-	}
-
-	stmt, ok := template.Statements[0].(*ast.VariableStatement)
-	if !ok {
-		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
-	}
-
+	stmt := getVariableStatement(t, template, 0)
 	checkIdentifierExpression(t, stmt.Expression, "te")
 }
 
@@ -76,25 +62,14 @@ func TestNumberLiteral(t *testing.T) {
 	// TODO test invalid numbers
 
 	template := parseTest(t, input)
+	checkStatementCount(t, template, 3)
 
-	if len(template.Statements) != 3 {
-		t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
-	}
-
-	stmt, ok := template.Statements[0].(*ast.VariableStatement)
-	if !ok {
-		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
-	}
-
+	stmt := getVariableStatement(t, template, 0)
 	checkNumberExpression(t, stmt.Expression, 400)
 
 	// The 2nd statement is a Raw node between the two
 
-	stmt, ok = template.Statements[2].(*ast.VariableStatement)
-	if !ok {
-		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
-	}
-
+	stmt = getVariableStatement(t, template, 2)
 	checkNumberExpression(t, stmt.Expression, 3.1415)
 }
 
@@ -109,24 +84,10 @@ func TestBooleanLiteral(t *testing.T) {
 
 	for _, test := range tests {
 		template := parseTest(t, test.input)
+		checkStatementCount(t, template, 1)
 
-		if len(template.Statements) != 1 {
-			t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
-		}
-
-		stmt, ok := template.Statements[0].(*ast.VariableStatement)
-		if !ok {
-			t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
-		}
-
-		exp, ok := stmt.Expression.(*ast.BooleanLiteral)
-		if !ok {
-			t.Fatalf("stmt is not a BooleanLiteral, got %T", stmt.Expression)
-		}
-
-		if exp.Value != test.expected {
-			t.Fatalf("BooleanLiteral has wrong value, expected %t got %t", test.expected, exp.Value)
-		}
+		stmt := getVariableStatement(t, template, 0)
+		checkBooleanLiteral(t, stmt.Expression, test.expected)
 	}
 }
 
@@ -143,24 +104,10 @@ func TestStringLiteral(t *testing.T) {
 
 	for _, test := range tests {
 		template := parseTest(t, test.input)
+		checkStatementCount(t, template, 1)
 
-		if len(template.Statements) != 1 {
-			t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
-		}
-
-		stmt, ok := template.Statements[0].(*ast.VariableStatement)
-		if !ok {
-			t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
-		}
-
-		exp, ok := stmt.Expression.(*ast.StringLiteral)
-		if !ok {
-			t.Fatalf("stmt is not a StringLiteral, got %T", stmt.Expression)
-		}
-
-		if exp.Value != test.expected {
-			t.Fatalf("StringLiteral has wrong value, expected %s got %s", test.expected, exp.Value)
-		}
+		stmt := getVariableStatement(t, template, 0)
+		checkStringLiteral(t, stmt.Expression, test.expected)
 	}
 }
 
@@ -176,15 +123,9 @@ func TestPrefixExpressions(t *testing.T) {
 
 	for _, test := range tests {
 		template := parseTest(t, test.input)
+		checkStatementCount(t, template, 1)
 
-		if len(template.Statements) != 1 {
-			t.Fatalf("Template did not have the right number of statements, got %d", len(template.Statements))
-		}
-
-		stmt, ok := template.Statements[0].(*ast.VariableStatement)
-		if !ok {
-			t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
-		}
+		stmt := getVariableStatement(t, template, 0)
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
 		if !ok {
@@ -222,15 +163,9 @@ func TestInfixExpressions(t *testing.T) {
 
 	for i, test := range tests {
 		template := parseTest(t, test.input)
+		checkStatementCount(t, template, 1)
 
-		if len(template.Statements) != 1 {
-			t.Fatalf("(%d) Template did not have the right number of statements, got %d", i, len(template.Statements))
-		}
-
-		stmt, ok := template.Statements[0].(*ast.VariableStatement)
-		if !ok {
-			t.Fatalf("(%d) Template statement was the wrong type, got %T", i, template.Statements[0])
-		}
+		stmt := getVariableStatement(t, template, 0)
 
 		exp, ok := stmt.Expression.(*ast.InfixExpression)
 		if !ok {
@@ -290,15 +225,9 @@ func TestFilters(t *testing.T) {
 
 	for i, test := range tests {
 		template := parseTest(t, test.input)
+		checkStatementCount(t, template, 1)
 
-		if len(template.Statements) != 1 {
-			t.Fatalf("(%d) Template did not have the right number of statements, got %d", i, len(template.Statements))
-		}
-
-		stmt, ok := template.Statements[0].(*ast.VariableStatement)
-		if !ok {
-			t.Fatalf("(%d) Template statement was the wrong type, got %T", i, template.Statements[0])
-		}
+		stmt := getVariableStatement(t, template, 0)
 
 		exp, ok := stmt.Expression.(*ast.FilterExpression)
 		if !ok {
@@ -314,11 +243,9 @@ func TestFilters(t *testing.T) {
 func TestFiltersWithParameters(t *testing.T) {
 	input := `{{ "Hello Mom" | replace: "Mom", with: "World" }}`
 	template := parseTest(t, input)
+	checkStatementCount(t, template, 1)
 
-	stmt, ok := template.Statements[0].(*ast.VariableStatement)
-	if !ok {
-		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
-	}
+	stmt := getVariableStatement(t, template, 0)
 
 	exp, ok := stmt.Expression.(*ast.FilterExpression)
 	if !ok {
@@ -356,6 +283,23 @@ func parseTest(t *testing.T, input string) *ast.Template {
 	checkParserErrors(t, p)
 
 	return template
+}
+
+func checkStatementCount(t *testing.T, template *ast.Template, expected int) {
+	if len(template.Statements) != expected {
+		t.Fatalf("Wrong number of statements. Expected %d, Got %d", expected, len(template.Statements))
+	}
+}
+
+func checkBooleanLiteral(t *testing.T, exp ast.Expression, expected bool) {
+	boolean, ok := exp.(*ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Expression not BOOLEAN, got %T", exp)
+	}
+
+	if boolean.Value != expected {
+		t.Fatalf("Bool has the wrong value. Expected '%t' got '%t'", expected, boolean.Value)
+	}
 }
 
 func checkNumberExpression(t *testing.T, exp ast.Expression, expected float64) {
@@ -414,4 +358,14 @@ func checkParserErrors(t *testing.T, p *Parser) {
 	}
 
 	t.FailNow()
+}
+
+func getVariableStatement(t *testing.T, template *ast.Template, index int) *ast.VariableStatement {
+	stmt, ok := template.Statements[index].(*ast.VariableStatement)
+
+	if !ok {
+		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
+	}
+
+	return stmt
 }
