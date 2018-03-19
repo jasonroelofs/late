@@ -89,8 +89,9 @@ func TestFilters(t *testing.T) {
 	}{
 		{`{{ "A String" | size }}`, object.OBJ_NUMBER, float64(8)},
 		{`{{ "A String" | upcase }}`, object.OBJ_STRING, "A STRING"},
-		{`{{ "A String" | upcase | size }}`, object.OBJ_NUMBER, float64(8)},
 		{`{{ "Hello Mom" | replace: "Mom", with: "World" }}`, object.OBJ_STRING, "Hello World"},
+		{`{{ "Hello Mom" | replace: " Mom", with: "" | upcase }}`, object.OBJ_STRING, "HELLO"},
+		{`{{ "Hello Mom" | replace: "Mom", with: ("World" | upcase) }}`, object.OBJ_STRING, "Hello WORLD"},
 		// TODO: Unknown filter
 		//   Strict: error out
 		//   Lax: treat as a pass-through no-op, trigger a warning

@@ -186,4 +186,34 @@ type FilterLiteral struct {
 }
 
 func (f *FilterLiteral) expressionNode() {}
-func (f *FilterLiteral) String() string  { return f.Name }
+func (f *FilterLiteral) String() string {
+	out := strings.Builder{}
+	var params []string
+	groupExpr := len(f.Parameters) > 0
+
+	if groupExpr {
+		out.WriteString("(")
+	}
+
+	out.WriteString(f.Name)
+
+	if len(f.Parameters) > 0 {
+		params = append(params, fmt.Sprintf(": %s", f.Parameters[f.Name].String()))
+
+		for name, expr := range f.Parameters {
+			if name == f.Name {
+				continue
+			}
+
+			params = append(params, fmt.Sprintf("%s: %s", name, expr.String()))
+		}
+
+		out.WriteString(strings.Join(params, ", "))
+	}
+
+	if groupExpr {
+		out.WriteString(")")
+	}
+
+	return out.String()
+}

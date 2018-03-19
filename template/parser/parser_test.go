@@ -200,6 +200,10 @@ func TestOperatorPrecedence(t *testing.T) {
 		{"{{ a | size }}", "(a | size)"},
 		{"{{ b | upcase | size }}", "((b | upcase) | size)"},
 		{"{{ 5 * 6 + 1 | filter }}", "(((5 * 6) + 1) | filter)"},
+		{`{{ a | remove: "this" | upcase }}`, `((a | (remove: "this")) | upcase)`},
+		{`{{ a | replace: "this", with: "that" | upcase }}`, `((a | (replace: "this", with: "that")) | upcase)`},
+		// We can explicitly nest filters inside of expressions with grouping!
+		{`{{ a | replace: "this", with: ("that" | upcase) }}`, `(a | (replace: "this", with: ("that" | upcase)))`},
 	}
 
 	for _, test := range tests {

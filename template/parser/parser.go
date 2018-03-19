@@ -239,7 +239,11 @@ func (p *Parser) parseFilter() ast.Expression {
 func (p *Parser) parseFilterParameters(initialParam string) map[string]ast.Expression {
 	list := make(map[string]ast.Expression)
 
-	list[initialParam] = p.parseExpression(LOWEST)
+	// We need to make sure the parser doesn't accidentally chain parameter
+	// expressions with further pipes, so we set PIPE as the lowest precendence here.
+	// Then, when we hit something like `(replace: "this", with: "that") | upcase` the parser
+	// stops at the `|` instead of seeing `replace: "this", with: ("that" | upcase)`.
+	list[initialParam] = p.parseExpression(PIPE)
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
@@ -254,8 +258,7 @@ func (p *Parser) parseFilterParameters(initialParam string) map[string]ast.Expre
 
 		p.nextToken()
 		p.nextToken()
-
-		list[paramName] = p.parseExpression(LOWEST)
+		list[paramName] = p.parseExpression(PIPE)
 	}
 
 	return list
