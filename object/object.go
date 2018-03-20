@@ -1,5 +1,7 @@
 package object
 
+import "fmt"
+
 type ObjectType string
 
 type Object interface {
@@ -17,6 +19,12 @@ func New(input interface{}) Object {
 	case bool:
 		return &Boolean{value: input}
 	default:
+		fmt.Printf(
+			"BUG: object.New() does not know how to convert variables of type %T.\n"+
+				"\tPlease open a ticket with this message and if possible the code that "+
+				"triggered this message.\n",
+			input,
+		)
 		return NULL
 	}
 }

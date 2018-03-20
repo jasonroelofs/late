@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/template/evaluator"
 	"github.com/jasonroelofs/late/template/lexer"
 	"github.com/jasonroelofs/late/template/parser"
@@ -13,8 +14,6 @@ type Template struct {
 	body string
 }
 
-type Params map[string]string
-
 func New(templateBody string) *Template {
 	return &Template{
 		body: templateBody,
@@ -22,7 +21,7 @@ func New(templateBody string) *Template {
 }
 
 // Render the template, returning the final output as a string
-func (t *Template) Render() string {
+func (t *Template) Render(context *context.Context) string {
 	lexer := lexer.New(t.body)
 	parser := parser.New(lexer)
 	ast := parser.Parse()
@@ -38,7 +37,7 @@ func (t *Template) Render() string {
 		return t.body
 	}
 
-	eval := evaluator.New(ast)
+	eval := evaluator.New(ast, context)
 
 	final := strings.Builder{}
 

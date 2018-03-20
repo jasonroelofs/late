@@ -1,6 +1,10 @@
 package template
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jasonroelofs/late/context"
+)
 
 func TestNew(t *testing.T) {
 	tpl := New("This is a template")
@@ -12,7 +16,7 @@ func TestNew(t *testing.T) {
 
 func TestRender(t *testing.T) {
 	tpl := New("This is a template")
-	results := tpl.Render()
+	results := tpl.Render(context.New())
 
 	if results != "This is a template" {
 		t.Errorf("Failed to render the template")
@@ -33,10 +37,32 @@ func TestRenderLiquidWithLiterals(t *testing.T) {
 
 	for _, test := range tests {
 		tpl := New(test.liquidInput)
-		results := tpl.Render()
+		results := tpl.Render(context.New())
 
 		if results != test.expectedOutput {
 			t.Errorf("Failed to render the template. Expected '%s' got '%s'", test.expectedOutput, results)
+		}
+	}
+}
+
+func TestRenderWithInitialState(t *testing.T) {
+	tests := []struct {
+		input    string
+		assigns  context.Assigns
+		expected string
+	}{
+		{"{{ page }}", context.Assigns{"page": "home"}, "home"},
+	}
+
+	for _, test := range tests {
+		tpl := New(test.input)
+		ctx := context.New()
+		ctx.Assign(test.assigns)
+
+		results := tpl.Render(ctx)
+
+		if results != test.expected {
+			t.Errorf("Failed to render. Expected '%s' got '%s'", test.expected, results)
 		}
 	}
 }

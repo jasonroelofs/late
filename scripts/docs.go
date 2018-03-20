@@ -9,6 +9,7 @@ import (
 
 	"github.com/sergi/go-diff/diffmatchpatch"
 
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/template"
 )
 
@@ -39,7 +40,8 @@ func main() {
 		fmt.Printf("Rendering %s\n", file)
 		testCase, expected = parseAndTestDocFile(file)
 		t := template.New(testCase)
-		results := t.Render()
+		ctx := context.New()
+		results := t.Render(ctx)
 
 		if expected != results {
 			dmp := diffmatchpatch.New()

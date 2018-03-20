@@ -3,6 +3,7 @@ package evaluator
 import (
 	"testing"
 
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 	"github.com/jasonroelofs/late/template/lexer"
 	"github.com/jasonroelofs/late/template/parser"
@@ -11,7 +12,7 @@ import (
 func TestRawStatements(t *testing.T) {
 	input := "This is a raw, non-liquid template"
 
-	results := evalInput(t, input)
+	results := evalInput(t, input, context.New())
 
 	checkStatementCount(t, results, 1)
 	checkObject(t, results[0], object.OBJ_STRING, input)
@@ -32,7 +33,7 @@ func TestNumbers(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		results := evalInput(t, test.input)
+		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 1)
 		checkObject(t, results[0], object.OBJ_NUMBER, test.expected)
@@ -55,7 +56,7 @@ func TestBooleans(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		results := evalInput(t, test.input)
+		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 1)
 		checkObject(t, results[0], object.OBJ_BOOL, test.expected)
@@ -74,7 +75,7 @@ func TestStrings(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		results := evalInput(t, test.input)
+		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 1)
 		checkObject(t, results[0], object.OBJ_STRING, test.expected)
@@ -98,14 +99,46 @@ func TestFilters(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		results := evalInput(t, test.input)
+		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 1)
 		checkObject(t, results[0], test.expectedType, test.expected)
 	}
 }
 
-func evalInput(t *testing.T, input string) []object.Object {
+func TestVariables(t *testing.T) {
+	tests := []struct {
+		input        string
+		assigns      context.Assigns
+		expectedType object.ObjectType
+		expected     interface{}
+	}{
+		{"{{ page }}", context.Assigns{"page": "home"}, object.OBJ_STRING, "home"},
+		{"{{ count }}", context.Assigns{"count": 10}, object.OBJ_NUMBER, float64(10)},
+		{"{{ unknown }}", context.Assigns{}, object.OBJ_NULL, nil},
+
+		// Test variable usage as filter parameters
+		{
+			"{{ page | replace: page, with: changeTo | upcase }}",
+			context.Assigns{"page": "home", "changeTo": "blog"},
+			object.OBJ_STRING,
+			"BLOG",
+		},
+
+		// TODO: if variables end up nil in the case above, what do we do?
+	}
+
+	for _, test := range tests {
+		ctx := context.New()
+		ctx.Assign(test.assigns)
+
+		results := evalInput(t, test.input, ctx)
+		checkStatementCount(t, results, 1)
+		checkObject(t, results[0], test.expectedType, test.expected)
+	}
+}
+
+func evalInput(t *testing.T, input string, ctx *context.Context) []object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	tpl := p.Parse()
@@ -118,7 +151,7 @@ func evalInput(t *testing.T, input string) []object.Object {
 		t.FailNow()
 	}
 
-	e := New(tpl)
+	e := New(tpl, ctx)
 	return e.Run()
 }
 
@@ -134,6 +167,9 @@ func checkObject(t *testing.T, obj object.Object, objType object.ObjectType, exp
 	}
 
 	if obj.Value() != expected {
-		t.Fatalf("Wrong value of object. Expected %v Got %v", expected, obj.Value())
+		t.Fatalf(
+			"Wrong value of object. Expected %v (%T) Got %v (%T)",
+			expected, expected, obj.Value(), obj.Value(),
+		)
 	}
 }

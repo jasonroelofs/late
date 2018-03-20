@@ -7,15 +7,14 @@ import (
 )
 
 type Evaluator struct {
-	Context *context.Context
-
+	context  *context.Context
 	template *ast.Template
 }
 
-func New(template *ast.Template) *Evaluator {
+func New(template *ast.Template, context *context.Context) *Evaluator {
 	return &Evaluator{
 		template: template,
-		Context:  context.New(),
+		context:  context,
 	}
 }
 
@@ -63,6 +62,9 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 
 	case *ast.StringLiteral:
 		return object.New(node.Value)
+
+	case *ast.Identifier:
+		return e.evalIdentifier(node.Value)
 
 	case *ast.FilterLiteral:
 		return e.evalFilterLiteral(node)
@@ -127,6 +129,10 @@ func (e *Evaluator) evalNumberPrefix(operator string, right object.Object) objec
 	}
 }
 
+func (e *Evaluator) evalIdentifier(name string) object.Object {
+	return e.context.Get(name)
+}
+
 func (e *Evaluator) evalFilterLiteral(node *ast.FilterLiteral) object.Object {
 	filterObj := &object.Filter{
 		Name:       node.Name,
@@ -144,7 +150,7 @@ func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
 	filterName := filter.(*object.Filter).Name
 	filterParams := filter.(*object.Filter).Parameters
 
-	filterFunc := e.Context.FindFilter(filterName)
+	filterFunc := e.context.FindFilter(filterName)
 
 	if filterFunc == nil {
 		return object.NULL
