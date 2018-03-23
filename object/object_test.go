@@ -31,3 +31,12 @@ func TestNew(t *testing.T) {
 		}
 	}
 }
+
+func TestNewReturnsObjectsRaw(t *testing.T) {
+	str := New("A test string")
+	copy := New(str)
+
+	if str != copy {
+		t.Errorf("Did not properly copy the object. Got %#v", copy)
+	}
+}

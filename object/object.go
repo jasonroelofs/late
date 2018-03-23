@@ -11,6 +11,11 @@ type Object interface {
 }
 
 func New(input interface{}) Object {
+	asObj, ok := input.(Object)
+	if ok {
+		return asObj
+	}
+
 	switch input := convertToNative(input).(type) {
 	case float64:
 		return &Number{value: float64(input)}
