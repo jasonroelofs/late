@@ -182,24 +182,36 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 		return nil
 	}
 
-	expectedTokens := stmt.Tag.Parse()
-	tokenIdx := 0
-	for !p.peekTokenIs(token.CLOSE_TAG) && !p.peekTokenIs(token.EOF) && len(expectedTokens) > tokenIdx {
+	rules := stmt.Tag.Parse()
+
+	for _, parseRule := range rules {
+		expectedTokenType := p.parseRuleToTokenType(parseRule)
+
+		if p.peekTokenIs(token.CLOSE_TAG) || p.peekTokenIs(token.EOF) {
+			p.parserErrorf("Error parsing tag '%s': expected %s", stmt.TagName, expectedTokenType)
+			break
+		}
+
 		p.nextToken()
 
-		switch parseRule := expectedTokens[tokenIdx].(type) {
+		if expectedTokenType != token.EXPRESSION && p.currToken.Type != expectedTokenType {
+			p.parserErrorf("Error parsing tag '%s': expected %s found %s", stmt.TagName, expectedTokenType, p.currToken.Type)
+			break
+		}
+
+		switch parseRule := parseRule.(type) {
 		case *tag.IdentifierRule:
 			stmt.Nodes = append(stmt.Nodes, &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal})
 		case *tag.LiteralRule:
 			stmt.Nodes = append(stmt.Nodes, &ast.StringLiteral{Token: p.currToken, Value: p.currToken.Literal})
 		case *tag.ExpressionRule:
 			stmt.Nodes = append(stmt.Nodes, p.parseExpression(LOWEST))
+		case *tag.TokenRule:
+			stmt.Nodes = append(stmt.Nodes, &ast.StringLiteral{Token: p.currToken, Value: p.currToken.Literal})
 		default:
-			p.parserErrorf("Error parsing tag %s, don't know how to handle ParseRule of type %T", parseRule)
+			p.parserErrorf("Error parsing tag '%s': Don't know how to handle ParseRule of type %T", stmt.TagName, parseRule)
 			return nil
 		}
-
-		tokenIdx += 1
 	}
 
 	if !p.expectPeek(token.CLOSE_TAG) {
@@ -210,6 +222,22 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 	p.nextToken()
 
 	return stmt
+}
+
+func (p *Parser) parseRuleToTokenType(parseRule tag.ParseRule) token.TokenType {
+	switch parseRule := parseRule.(type) {
+	case *tag.IdentifierRule:
+		return token.IDENT
+	case *tag.LiteralRule:
+		return token.STRING
+	case *tag.TokenRule:
+		return parseRule.Type
+	case *tag.ExpressionRule:
+		return token.EXPRESSION
+	default:
+		p.parserErrorf("Don't know how to convert parseRule type %T to a token.TokenType", parseRule)
+		return token.ILLEGAL
+	}
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
@@ -406,6 +434,6 @@ func (p *Parser) expectedTokenError(got token.TokenType, expected ...token.Token
 }
 
 func (p *Parser) parserErrorf(message string, args ...interface{}) {
-	msg := fmt.Sprintf(message, args)
+	msg := fmt.Sprintf(message, args...)
 	p.Errors = append(p.Errors, msg)
 }

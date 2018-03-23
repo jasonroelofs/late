@@ -48,4 +48,8 @@ const (
 	GT_EQ  = "GT_EQ"
 	EQ     = "EQ"
 	NOT_EQ = "NOT_EQ"
+
+	// The following are meta-tokens used when
+	// validating parse and evaluation rules for tags.
+	EXPRESSION = "EXPRESSION"
 )

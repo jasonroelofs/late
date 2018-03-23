@@ -2,6 +2,7 @@ package tag
 
 import (
 	"github.com/jasonroelofs/late/object"
+	"github.com/jasonroelofs/late/template/token"
 )
 
 /**
@@ -20,7 +21,7 @@ func (a *Assign) TagName() string {
 }
 
 func (a *Assign) Parse() []ParseRule {
-	return []ParseRule{Identifier(), Literal("="), Expression()}
+	return []ParseRule{Identifier(), Token(token.ASSIGN), Expression()}
 }
 
 func (a *Assign) Eval(env Environment, results []object.Object) {

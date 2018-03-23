@@ -308,6 +308,35 @@ func TestTags(t *testing.T) {
 	}
 }
 
+func TestTagErrors(t *testing.T) {
+	tests := []struct {
+		input    string
+		errorStr string
+	}{
+		{`{% explode %}`, "Unknown tag 'explode'"},
+		{`{% assign %}`, "Error parsing tag 'assign': expected IDENT"},
+		{`{% assign var %}`, "Error parsing tag 'assign': expected ASSIGN"},
+		{`{% assign var = %}`, "Error parsing tag 'assign': expected EXPRESSION"},
+		{`{% assign var 10 %}`, "Error parsing tag 'assign': expected ASSIGN found NUMBER"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p := New(l)
+		p.Parse()
+
+		errors := p.Errors
+		if len(errors) == 0 {
+			t.Fatalf("Expected errors for '%s' but none were thrown", test.input)
+		}
+
+		err := errors[0]
+		if err != test.errorStr {
+			t.Errorf("Wrong error string for '%s'. Expected `%s` got `%s`", test.input, test.errorStr, err)
+		}
+	}
+}
+
 /**
  * Helper methods
  */
