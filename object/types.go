@@ -22,7 +22,7 @@ type Null struct{}
 
 func (n *Null) Type() ObjectType   { return OBJ_NULL }
 func (n *Null) Value() interface{} { return nil }
-func (n *Null) Inspect() string    { return "null" }
+func (n *Null) Inspect() string    { return "" }
 
 type Number struct {
 	value float64
