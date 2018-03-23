@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jasonroelofs/late/tag"
 	"github.com/jasonroelofs/late/template/ast"
 	"github.com/jasonroelofs/late/template/lexer"
 	"github.com/jasonroelofs/late/template/token"
@@ -88,6 +89,10 @@ func New(lexer *lexer.Lexer) *Parser {
 	return p
 }
 
+func (p *Parser) CurrentTokenName() string {
+	return p.currToken.Literal
+}
+
 func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }
@@ -130,6 +135,8 @@ func (p *Parser) parseNext() ast.Statement {
 	switch p.currToken.Type {
 	case token.OPEN_VAR:
 		return p.parseVariableStatement()
+	case token.OPEN_TAG:
+		return p.parseTagStatement()
 	default:
 		return p.parseRawStatement()
 	}
@@ -154,6 +161,56 @@ func (p *Parser) parseVariableStatement() *ast.VariableStatement {
 
 	// Advance to make sure we are now at a closing }}
 	// and can continue
+	p.nextToken()
+
+	return stmt
+}
+
+func (p *Parser) parseTagStatement() *ast.TagStatement {
+	stmt := &ast.TagStatement{Token: p.currToken}
+
+	// Move past the opening {%
+	p.nextToken()
+
+	// Store the first token as our name
+	stmt.TagName = p.currToken.Literal
+
+	// TODO: Dynamic lookup of struct
+	switch stmt.TagName {
+	case "assign":
+		stmt.Tag = &tag.Assign{}
+	}
+
+	if stmt.Tag == nil {
+		p.parserErrorf("Don't know how to handle the %s tag", stmt.TagName)
+		return nil
+	}
+
+	expectedTokens := stmt.Tag.Parse()
+	tokenIdx := 0
+	for !p.peekTokenIs(token.CLOSE_TAG) && !p.peekTokenIs(token.EOF) && len(expectedTokens) > tokenIdx {
+		p.nextToken()
+
+		switch parseRule := expectedTokens[tokenIdx].(type) {
+		case *tag.IdentifierRule:
+			stmt.Nodes = append(stmt.Nodes, &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal})
+		case *tag.LiteralRule:
+			stmt.Nodes = append(stmt.Nodes, &ast.StringLiteral{Token: p.currToken, Value: p.currToken.Literal})
+		case *tag.ExpressionRule:
+			stmt.Nodes = append(stmt.Nodes, p.parseExpression(LOWEST))
+		default:
+			p.parserErrorf("Error parsing tag %s, don't know how to handle ParseRule of type %T", parseRule)
+			return nil
+		}
+
+		tokenIdx += 1
+	}
+
+	if !p.expectPeek(token.CLOSE_TAG) {
+		return nil
+	}
+
+	// Move to our %} token so we can continue
 	p.nextToken()
 
 	return stmt

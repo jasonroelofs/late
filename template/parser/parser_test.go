@@ -279,6 +279,39 @@ func TestFiltersWithParameters(t *testing.T) {
 	checkStringLiteral(t, expr, "World")
 }
 
+func TestTags(t *testing.T) {
+	tests := []struct {
+		input    string
+		tagName  string
+		numNodes int
+	}{
+		{`{% assign this = "that" %}`, "assign", 3},
+	}
+
+	for _, test := range tests {
+		template := parseTest(t, test.input)
+		checkStatementCount(t, template, 1)
+
+		stmt := getTagStatement(t, template, 0)
+
+		if stmt.TagName != test.tagName {
+			t.Fatalf("Did not parse out the right tag name, Expected %s Got %s", test.tagName, stmt.TagName)
+		}
+
+		if stmt.Tag == nil {
+			t.Fatalf("Did not store the instantiated tag in the tree")
+		}
+
+		if len(stmt.Nodes) != test.numNodes {
+			t.Fatalf("Did not store the right number of ast nodes. Expected %d got %d", test.numNodes, len(stmt.Nodes))
+		}
+	}
+}
+
+/**
+ * Helper methods
+ */
+
 func parseTest(t *testing.T, input string) *ast.Template {
 	l := lexer.New(input)
 	p := New(l)
@@ -366,6 +399,16 @@ func checkParserErrors(t *testing.T, p *Parser) {
 
 func getVariableStatement(t *testing.T, template *ast.Template, index int) *ast.VariableStatement {
 	stmt, ok := template.Statements[index].(*ast.VariableStatement)
+
+	if !ok {
+		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])
+	}
+
+	return stmt
+}
+
+func getTagStatement(t *testing.T, template *ast.Template, index int) *ast.TagStatement {
+	stmt, ok := template.Statements[index].(*ast.TagStatement)
 
 	if !ok {
 		t.Fatalf("Template statement was the wrong type, got %T", template.Statements[0])

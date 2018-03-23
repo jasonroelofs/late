@@ -22,35 +22,46 @@ func (e *Evaluator) Run() []object.Object {
 	var objects []object.Object
 
 	for _, statement := range e.template.Statements {
-		result := e.eval(statement)
+		result := e.Eval(statement)
 		objects = append(objects, result)
 	}
 
 	return objects
 }
 
-func (e *Evaluator) eval(node ast.Node) object.Object {
+func (e *Evaluator) Set(variable string, value interface{}) {
+	e.context.Set(variable, value)
+}
+
+func (e *Evaluator) Get(variable string) object.Object {
+	return e.context.Get(variable)
+}
+
+func (e *Evaluator) Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	// Top-level Statements
 	case *ast.RawStatement:
 		return object.New(node.String())
 
 	case *ast.VariableStatement:
-		return e.eval(node.Expression)
+		return e.Eval(node.Expression)
+
+	case *ast.TagStatement:
+		return e.evalTagStatement(node)
 
 	// Expressions
 	case *ast.InfixExpression:
-		left := e.eval(node.Left)
-		right := e.eval(node.Right)
+		left := e.Eval(node.Left)
+		right := e.Eval(node.Right)
 		return e.evalInfix(node.Operator, left, right)
 
 	case *ast.PrefixExpression:
-		right := e.eval(node.Right)
+		right := e.Eval(node.Right)
 		return e.evalPrefix(node.Operator, right)
 
 	case *ast.FilterExpression:
-		input := e.eval(node.Input)
-		filter := e.eval(node.Filter)
+		input := e.Eval(node.Input)
+		filter := e.Eval(node.Filter)
 		return e.evalFilter(input, filter)
 
 	// Literals
@@ -72,6 +83,22 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 	default:
 		return object.NULL
 	}
+}
+
+func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
+	var results []object.Object
+
+	for _, node := range node.Nodes {
+		switch node := node.(type) {
+		case *ast.Identifier:
+			results = append(results, object.New(node.Value))
+		default:
+			results = append(results, e.Eval(node))
+		}
+	}
+
+	node.Tag.Eval(e, results)
+	return object.NULL
 }
 
 func (e *Evaluator) evalInfix(operator string, left, right object.Object) object.Object {
@@ -140,7 +167,7 @@ func (e *Evaluator) evalFilterLiteral(node *ast.FilterLiteral) object.Object {
 	}
 
 	for paramName, paramExp := range node.Parameters {
-		filterObj.Parameters[paramName] = e.eval(paramExp)
+		filterObj.Parameters[paramName] = e.Eval(paramExp)
 	}
 
 	return filterObj

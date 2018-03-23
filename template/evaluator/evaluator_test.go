@@ -138,6 +138,28 @@ func TestVariables(t *testing.T) {
 	}
 }
 
+func TestTags(t *testing.T) {
+	tests := []struct {
+		input        string
+		expectedType object.ObjectType
+		expected     interface{}
+	}{
+		// {{ page = "home" }}
+		{`{% assign page = "home" %}{{ page }}`, object.OBJ_STRING, "home"},
+		{"{% assign count = 10 %}{{ count }}", object.OBJ_NUMBER, float64(10)},
+		{`{% assign page_size = "home" | size %}{{ page_size }}`, object.OBJ_NUMBER, float64(4)},
+	}
+
+	for _, test := range tests {
+		results := evalInput(t, test.input, context.New())
+
+		checkStatementCount(t, results, 3)
+		checkObject(t, results[0], object.OBJ_NULL, nil)
+		checkObject(t, results[1], object.OBJ_STRING, "")
+		checkObject(t, results[2], test.expectedType, test.expected)
+	}
+}
+
 func evalInput(t *testing.T, input string, ctx *context.Context) []object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)

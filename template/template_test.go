@@ -66,3 +66,23 @@ func TestRenderWithInitialState(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderWithAssigns(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`{% assign page = "home" %}{{ page }}`, "home"},
+		{`{% assign page = "home" | upcase %}{{ page }}`, "HOME"},
+		{`{% assign page = "Here" | replace: "Here", with: "There" %}{{ page }}`, "There"},
+	}
+
+	for _, test := range tests {
+		tpl := New(test.input)
+		results := tpl.Render(context.New())
+
+		if results != test.expected {
+			t.Errorf("Failed to render. Expected '%s' got '%s'", test.expected, results)
+		}
+	}
+}

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jasonroelofs/late/tag"
 	"github.com/jasonroelofs/late/template/token"
 )
 
@@ -71,6 +72,31 @@ type VariableStatement struct {
 func (v *VariableStatement) statementNode() {}
 func (v *VariableStatement) String() string {
 	return v.Expression.String()
+}
+
+type TagStatement struct {
+	Token   token.Token
+	TagName string
+	Tag     tag.Tag
+	Nodes   []Expression
+}
+
+func (t *TagStatement) statementNode() {}
+func (t *TagStatement) String() string {
+	out := strings.Builder{}
+
+	out.WriteString("(")
+	out.WriteString(t.TagName)
+	// TODO
+	//	if t.Expression != nil {
+	//		out.WriteString("")
+	//		out.WriteString(t.Expression.String())
+	//		out.WriteString("")
+	//	}
+
+	out.WriteString(")")
+
+	return out.String()
 }
 
 type PrefixExpression struct {
