@@ -17,10 +17,6 @@ type Filter struct {
 	FilterFunc FilterFunc
 }
 
-type FilterContainer interface {
-	AddFilter(string, FilterFunc)
-}
-
 func New(filterFunc FilterFunc) *Filter {
 	return &Filter{
 		FilterFunc: filterFunc,

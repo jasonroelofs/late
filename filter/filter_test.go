@@ -15,7 +15,7 @@ func TestSize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := size(test.input, make(Parameters))
+		got := Size(test.input, make(Parameters))
 
 		if got.Value() != test.expected.Value() {
 			t.Errorf("Returned the wrong value. Expected %#v got %#v", test.expected, got)
@@ -33,7 +33,7 @@ func TestUpcase(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := upcase(test.input, make(Parameters))
+		got := Upcase(test.input, make(Parameters))
 
 		if got.Value() != test.expected.Value() {
 			t.Errorf("Returned the wrong value. Expected %#v got %#v", test.expected, got)

@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"github.com/jasonroelofs/late"
 	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 	"github.com/jasonroelofs/late/template/ast"
@@ -177,7 +178,7 @@ func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
 	filterName := filter.(*object.Filter).Name
 	filterParams := filter.(*object.Filter).Parameters
 
-	filterFunc := e.context.FindFilter(filterName)
+	filterFunc := late.FindFilter(filterName)
 
 	if filterFunc == nil {
 		return object.NULL

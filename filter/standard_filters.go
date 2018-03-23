@@ -6,13 +6,7 @@ import (
 	"github.com/jasonroelofs/late/object"
 )
 
-func ApplyStandardFilters(container FilterContainer) {
-	container.AddFilter("size", size)
-	container.AddFilter("upcase", upcase)
-	container.AddFilter("replace", replace)
-}
-
-func size(input object.Object, _ Parameters) object.Object {
+func Size(input object.Object, _ Parameters) object.Object {
 	switch input.Type() {
 	case object.OBJ_STRING:
 		return object.New(len(input.Value().(string)))
@@ -21,7 +15,7 @@ func size(input object.Object, _ Parameters) object.Object {
 	}
 }
 
-func upcase(input object.Object, _ Parameters) object.Object {
+func Upcase(input object.Object, _ Parameters) object.Object {
 	switch inputT := input.Value().(type) {
 	case string:
 		return object.New(strings.ToUpper(inputT))
@@ -30,7 +24,7 @@ func upcase(input object.Object, _ Parameters) object.Object {
 	}
 }
 
-func replace(input object.Object, params Parameters) object.Object {
+func Replace(input object.Object, params Parameters) object.Object {
 	// TODO Type checking and verification that the parameters are in-fact
 	// Strings and will work here.
 	in := input.Value().(string)

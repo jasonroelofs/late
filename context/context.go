@@ -1,25 +1,19 @@
 package context
 
 import (
-	"github.com/jasonroelofs/late/filter"
 	"github.com/jasonroelofs/late/object"
 )
 
 type Assigns map[string]interface{}
 
 type Context struct {
-	filters map[string]*filter.Filter
-
 	globalAssigns map[string]object.Object
 }
 
 func New() *Context {
 	ctx := &Context{
-		filters:       make(map[string]*filter.Filter),
 		globalAssigns: make(map[string]object.Object),
 	}
-
-	filter.ApplyStandardFilters(ctx)
 
 	return ctx
 }
@@ -42,12 +36,4 @@ func (c *Context) Get(name string) object.Object {
 	}
 
 	return obj
-}
-
-func (c *Context) AddFilter(name string, filterFunc filter.FilterFunc) {
-	c.filters[name] = filter.New(filterFunc)
-}
-
-func (c *Context) FindFilter(name string) *filter.Filter {
-	return c.filters[name]
 }

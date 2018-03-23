@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jasonroelofs/late"
 	"github.com/jasonroelofs/late/tag"
 	"github.com/jasonroelofs/late/template/ast"
 	"github.com/jasonroelofs/late/template/lexer"
@@ -174,15 +175,10 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 
 	// Store the first token as our name
 	stmt.TagName = p.currToken.Literal
-
-	// TODO: Dynamic lookup of struct
-	switch stmt.TagName {
-	case "assign":
-		stmt.Tag = &tag.Assign{}
-	}
+	stmt.Tag = late.FindTag(stmt.TagName)
 
 	if stmt.Tag == nil {
-		p.parserErrorf("Don't know how to handle the %s tag", stmt.TagName)
+		p.parserErrorf("Unknown tag '%s'", stmt.TagName)
 		return nil
 	}
 
