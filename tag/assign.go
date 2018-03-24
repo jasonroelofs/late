@@ -16,8 +16,8 @@ import (
 type Assign struct {
 }
 
-func (a *Assign) TagName() string {
-	return "assign"
+func (a *Assign) Block() bool {
+	return false
 }
 
 func (a *Assign) Parse() []ParseRule {

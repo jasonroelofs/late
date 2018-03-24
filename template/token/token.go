@@ -49,6 +49,9 @@ const (
 	EQ     = "EQ"
 	NOT_EQ = "NOT_EQ"
 
+	// A special lexer token for the {% end %} token of a block.
+	END = "END"
+
 	// The following are meta-tokens used when
 	// validating parse and evaluation rules for tags.
 	EXPRESSION = "EXPRESSION"

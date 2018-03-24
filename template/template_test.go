@@ -86,3 +86,23 @@ func TestRenderWithAssigns(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderWithComments(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`Before {% comment %} Middle {% end %} End`, "Before  End"},
+		{`{% comment %}{{ "hi" }}{% end %}`, ""},
+		{`{% comment %} {% comment %} {% end %} {% end %}`, ""},
+	}
+
+	for _, test := range tests {
+		tpl := New(test.input)
+		results := tpl.Render(context.New())
+
+		if results != test.expected {
+			t.Errorf("Failed to render. Expected '%s' got '%s'", test.expected, results)
+		}
+	}
+}

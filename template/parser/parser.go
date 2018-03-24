@@ -221,6 +221,10 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 	// Move to our %} token so we can continue
 	p.nextToken()
 
+	if stmt.Tag.Block() {
+		stmt.BlockStatement = p.parseBlockStatement()
+	}
+
 	return stmt
 }
 
@@ -238,6 +242,19 @@ func (p *Parser) parseRuleToTokenType(parseRule tag.ParseRule) token.TokenType {
 		p.parserErrorf("Don't know how to convert parseRule type %T to a token.TokenType", parseRule)
 		return token.ILLEGAL
 	}
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	stmt := &ast.BlockStatement{}
+
+	for !p.peekTokenIs(token.END) && !p.peekTokenIs(token.EOF) {
+		stmt.Statements = append(stmt.Statements, p.parseNext())
+		p.nextToken()
+	}
+
+	p.nextToken()
+
+	return stmt
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {

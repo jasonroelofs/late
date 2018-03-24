@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"strings"
+
 	"github.com/jasonroelofs/late/template/token"
 )
 
@@ -70,34 +72,39 @@ func (l *Lexer) parseUntilLiquid() token.Token {
 func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 	l.skipWhitespace()
 
+	switch {
+	case l.next("{%end%}"):
+		tok = newTokenStr(token.END, "{% end %}")
+		l.inLiquid = false
+	case l.next("{%"):
+		tok = newTokenStr(token.OPEN_TAG, "{%")
+	case l.next("%}"):
+		tok = newTokenStr(token.CLOSE_TAG, "%}")
+		l.inLiquid = false
+	case l.next("{{"):
+		tok = newTokenStr(token.OPEN_VAR, "{{")
+	case l.next("}}"):
+		tok = newTokenStr(token.CLOSE_VAR, "}}")
+		l.inLiquid = false
+	case l.next(">="):
+		tok = newTokenStr(token.GT_EQ, ">=")
+	case l.next("<="):
+		tok = newTokenStr(token.LT_EQ, "<=")
+	case l.next("=="):
+		tok = newTokenStr(token.EQ, "==")
+	case l.next("!="):
+		tok = newTokenStr(token.NOT_EQ, "!=")
+	}
+
+	if tok.Type != "" {
+		return
+	}
+
 	switch l.ch {
 	case '{':
-		if l.peek() == '{' {
-			tok = newTokenW(token.OPEN_VAR, "{{")
-			l.readChar()
-		} else if l.peek() == '%' {
-			tok = newTokenW(token.OPEN_TAG, "{%")
-			l.readChar()
-		} else {
-			tok = newToken(token.LBRACKET, l.ch)
-		}
+		tok = newToken(token.LBRACKET, l.ch)
 	case '}':
-		if l.peek() == '}' {
-			tok = newTokenW(token.CLOSE_VAR, "}}")
-			l.readChar()
-			l.inLiquid = false
-		} else {
-			tok = newToken(token.RBRACKET, l.ch)
-		}
-	case '%':
-		if l.peek() == '}' {
-			tok = newTokenW(token.CLOSE_TAG, "%}")
-			l.readChar()
-			l.inLiquid = false
-		} else {
-			tok = newToken(token.PERCENT, l.ch)
-		}
-
+		tok = newToken(token.RBRACKET, l.ch)
 	case '[':
 		tok = newToken(token.LSQUARE, l.ch)
 	case ']':
@@ -123,34 +130,11 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 	case ')':
 		tok = newToken(token.RPAREN, l.ch)
 	case '>':
-		if l.peek() == '=' {
-			tok = newTokenW(token.GT_EQ, ">=")
-			l.readChar()
-		} else {
-			tok = newToken(token.GT, l.ch)
-		}
+		tok = newToken(token.GT, l.ch)
 	case '<':
-		if l.peek() == '=' {
-			tok = newTokenW(token.LT_EQ, "<=")
-			l.readChar()
-		} else {
-			tok = newToken(token.LT, l.ch)
-		}
+		tok = newToken(token.LT, l.ch)
 	case '=':
-		if l.peek() == '=' {
-			tok = newTokenW(token.EQ, "==")
-			l.readChar()
-		} else {
-			tok = newToken(token.ASSIGN, l.ch)
-		}
-	case '!':
-		if l.peek() == '=' {
-			tok = newTokenW(token.NOT_EQ, "!=")
-			l.readChar()
-		} else {
-			// We don't currently support prefix !
-			tok = newToken(token.ILLEGAL, l.ch)
-		}
+		tok = newToken(token.ASSIGN, l.ch)
 	case '"', '\'':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
@@ -182,6 +166,20 @@ func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
 	return
 }
 
+func (l *Lexer) next(expect string) bool {
+	peek, realLen := l.peekMore(len(expect))
+
+	// If we found a match then we need to make sure
+	// we kick ourselves forward enough in the string
+	// so parsing can continue after this tag.
+	if peek == expect {
+		l.moveForward(realLen)
+		return true
+	}
+
+	return false
+}
+
 func (l *Lexer) readNumber() string {
 	startPosition := l.position
 
@@ -205,6 +203,24 @@ func (l *Lexer) readIdentifier() string {
 	}
 
 	return l.input[startPosition:l.position]
+}
+
+func (l *Lexer) peekMore(peekLen int) (string, int) {
+	start := l.position
+	peekStr := &strings.Builder{}
+	at := 0
+
+	for at < peekLen {
+		l.skipWhitespace()
+		peekStr.WriteByte(l.ch)
+		l.readChar()
+		at += 1
+	}
+
+	realLen := l.position - start
+	l.resetTo(start)
+
+	return peekStr.String(), realLen
 }
 
 func (l *Lexer) readString() string {
@@ -243,6 +259,12 @@ func (l *Lexer) atLiquidStart() bool {
 	return (l.ch == '{' && (l.peek() == '{' || l.peek() == '%'))
 }
 
+func (l *Lexer) moveForward(num int) {
+	for i := 0; i < num; i++ {
+		l.readChar()
+	}
+}
+
 func (l *Lexer) readChar() {
 	if l.peekPosition >= len(l.input) {
 		l.ch = 0
@@ -252,6 +274,12 @@ func (l *Lexer) readChar() {
 
 	l.position = l.peekPosition
 	l.peekPosition += 1
+}
+
+func (l *Lexer) resetTo(pos int) {
+	l.position = pos
+	l.peekPosition = l.position + 1
+	l.ch = l.input[l.position]
 }
 
 func (l *Lexer) peek() byte {
@@ -274,9 +302,9 @@ func isIdentifier(ch byte) bool {
 }
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return newTokenW(tokenType, string(ch))
+	return newTokenStr(tokenType, string(ch))
 }
 
-func newTokenW(tokenType token.TokenType, tok string) token.Token {
+func newTokenStr(tokenType token.TokenType, tok string) token.Token {
 	return token.Token{Type: tokenType, Literal: tok}
 }

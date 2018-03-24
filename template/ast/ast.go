@@ -75,10 +75,11 @@ func (v *VariableStatement) String() string {
 }
 
 type TagStatement struct {
-	Token   token.Token
-	TagName string
-	Tag     tag.Tag
-	Nodes   []Expression
+	Token          token.Token
+	TagName        string
+	Tag            tag.Tag
+	Nodes          []Expression
+	BlockStatement *BlockStatement
 }
 
 func (t *TagStatement) statementNode() {}
@@ -87,14 +88,27 @@ func (t *TagStatement) String() string {
 
 	out.WriteString("(")
 	out.WriteString(t.TagName)
-	// TODO
-	//	if t.Expression != nil {
-	//		out.WriteString("")
-	//		out.WriteString(t.Expression.String())
-	//		out.WriteString("")
-	//	}
+
+	for _, expr := range t.Nodes {
+		out.WriteString(expr.String())
+	}
 
 	out.WriteString(")")
+
+	return out.String()
+}
+
+type BlockStatement struct {
+	Statements []Statement
+}
+
+func (b *BlockStatement) statementNode() {}
+func (b *BlockStatement) String() string {
+	out := strings.Builder{}
+
+	for _, stmt := range b.Statements {
+		out.WriteString(stmt.String())
+	}
 
 	return out.String()
 }

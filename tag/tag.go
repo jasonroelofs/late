@@ -11,7 +11,7 @@ import (
 // that close with a matching {% end %}
 
 type Tag interface {
-	TagName() string
+	Block() bool
 	Parse() []ParseRule
 	Eval(Environment, []object.Object)
 }

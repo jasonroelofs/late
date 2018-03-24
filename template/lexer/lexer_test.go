@@ -43,9 +43,7 @@ func TestTokenizesInput(t *testing.T) {
 		{token.IDENT, "tag"},
 		{token.CLOSE_TAG, "%}"},
 		{token.RAW, "\n\t\t\tStuff here\n\t\t"},
-		{token.OPEN_TAG, "{%"},
-		{token.IDENT, "end"},
-		{token.CLOSE_TAG, "%}"},
+		{token.END, "{% end %}"},
 		{token.RAW, "\n\t\tSo much { Not % quite { { liquid } % } here.\n\t\t\"This is stringy\"\n\t\t"},
 		{token.OPEN_VAR, "{{"},
 		{token.STRING, "This is a string"},
@@ -182,6 +180,17 @@ func TestEmptyTemplate(t *testing.T) {
 	input := ``
 
 	tests := []ExpectedToken{
+		{token.EOF, ""},
+	}
+
+	testTemplateGeneratesTokens(t, input, tests)
+}
+
+func TestEndToken(t *testing.T) {
+	input := "{% end %}"
+
+	tests := []ExpectedToken{
+		{token.END, "{% end %}"},
 		{token.EOF, ""},
 	}
 
