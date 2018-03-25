@@ -10,6 +10,8 @@ import (
 )
 
 type Node interface {
+	// String prints out the current node as close
+	// to its input as possible.
 	String() string
 }
 
@@ -71,7 +73,13 @@ type VariableStatement struct {
 
 func (v *VariableStatement) statementNode() {}
 func (v *VariableStatement) String() string {
-	return v.Expression.String()
+	out := strings.Builder{}
+
+	out.WriteString("{{ ")
+	out.WriteString(v.Expression.String())
+	out.WriteString(" }}")
+
+	return out.String()
 }
 
 type TagStatement struct {
@@ -86,14 +94,22 @@ func (t *TagStatement) statementNode() {}
 func (t *TagStatement) String() string {
 	out := strings.Builder{}
 
-	out.WriteString("(")
+	out.WriteString("{% ")
 	out.WriteString(t.TagName)
 
 	for _, expr := range t.Nodes {
 		out.WriteString(expr.String())
 	}
 
-	out.WriteString(")")
+	out.WriteString(" %}")
+
+	if t.BlockStatement != nil {
+		out.WriteString(t.BlockStatement.String())
+
+		// We don't have an explicit parse node for the end, it's
+		// just a lexer token to explicitly add it back here.
+		out.WriteString("{% end %}")
+	}
 
 	return out.String()
 }
@@ -123,10 +139,8 @@ func (p *PrefixExpression) expressionNode() {}
 func (p *PrefixExpression) String() string {
 	out := strings.Builder{}
 
-	out.WriteString("(")
 	out.WriteString(p.Operator)
 	out.WriteString(p.Right.String())
-	out.WriteString(")")
 
 	return out.String()
 }
@@ -142,11 +156,9 @@ func (i *InfixExpression) expressionNode() {}
 func (i *InfixExpression) String() string {
 	out := strings.Builder{}
 
-	out.WriteString("(")
 	out.WriteString(i.Left.String())
 	out.WriteString(" " + i.Operator + " ")
 	out.WriteString(i.Right.String())
-	out.WriteString(")")
 
 	return out.String()
 }
@@ -166,14 +178,13 @@ type FilterExpression struct {
 }
 
 func (f *FilterExpression) expressionNode() {}
+
 func (f *FilterExpression) String() string {
 	out := strings.Builder{}
 
-	out.WriteString("(")
 	out.WriteString(f.Input.String())
 	out.WriteString(" | ")
 	out.WriteString(f.Filter.String())
-	out.WriteString(")")
 
 	return out.String()
 }

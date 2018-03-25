@@ -24,9 +24,10 @@ func (a *Assign) Parse() []ParseRule {
 	return []ParseRule{Identifier(), Token(token.ASSIGN), Expression()}
 }
 
-func (a *Assign) Eval(env Environment, results []object.Object) {
+func (a *Assign) Eval(env Environment, results []object.Object, _ []Statement) object.Object {
 	varName := results[0].Value().(string)
 	result := results[2]
 
 	env.Set(varName, result)
+	return object.NULL
 }

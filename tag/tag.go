@@ -13,10 +13,14 @@ import (
 type Tag interface {
 	Block() bool
 	Parse() []ParseRule
-	Eval(Environment, []object.Object)
+	Eval(Environment, []object.Object, []Statement) object.Object
 }
 
 type Environment interface {
 	Get(string) object.Object
 	Set(string, interface{})
+}
+
+type Statement interface {
+	String() string
 }

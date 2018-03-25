@@ -174,6 +174,7 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 	p.nextToken()
 
 	// Store the first token as our name
+	// and find the tag object with that name.
 	stmt.TagName = p.currToken.Literal
 	stmt.Tag = late.FindTag(stmt.TagName)
 
@@ -248,8 +249,8 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	stmt := &ast.BlockStatement{}
 
 	for !p.peekTokenIs(token.END) && !p.peekTokenIs(token.EOF) {
-		stmt.Statements = append(stmt.Statements, p.parseNext())
 		p.nextToken()
+		stmt.Statements = append(stmt.Statements, p.parseNext())
 	}
 
 	p.nextToken()

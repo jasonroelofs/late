@@ -4,6 +4,7 @@ import (
 	"github.com/jasonroelofs/late"
 	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
+	"github.com/jasonroelofs/late/tag"
 	"github.com/jasonroelofs/late/template/ast"
 )
 
@@ -98,8 +99,14 @@ func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
 		}
 	}
 
-	node.Tag.Eval(e, results)
-	return object.NULL
+	var blockStmts []tag.Statement
+	if node.Tag.Block() {
+		for _, stmt := range node.BlockStatement.Statements {
+			blockStmts = append(blockStmts, stmt.(tag.Statement))
+		}
+	}
+
+	return node.Tag.Eval(e, results, blockStmts)
 }
 
 func (e *Evaluator) evalInfix(operator string, left, right object.Object) object.Object {

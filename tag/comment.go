@@ -23,6 +23,7 @@ func (a *Comment) Parse() []ParseRule {
 	return []ParseRule{}
 }
 
-func (a *Comment) Eval(_ Environment, _ []object.Object) {
+func (a *Comment) Eval(_ Environment, _ []object.Object, _ []Statement) object.Object {
 	// Do nothing, all content is gone
+	return object.NULL
 }

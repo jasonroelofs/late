@@ -67,7 +67,7 @@ func TestRenderWithInitialState(t *testing.T) {
 	}
 }
 
-func TestRenderWithAssigns(t *testing.T) {
+func TestRender_Tags(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
@@ -75,26 +75,13 @@ func TestRenderWithAssigns(t *testing.T) {
 		{`{% assign page = "home" %}{{ page }}`, "home"},
 		{`{% assign page = "home" | upcase %}{{ page }}`, "HOME"},
 		{`{% assign page = "Here" | replace: "Here", with: "There" %}{{ page }}`, "There"},
-	}
 
-	for _, test := range tests {
-		tpl := New(test.input)
-		results := tpl.Render(context.New())
-
-		if results != test.expected {
-			t.Errorf("Failed to render. Expected '%s' got '%s'", test.expected, results)
-		}
-	}
-}
-
-func TestRenderWithComments(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
 		{`Before {% comment %} Middle {% end %} End`, "Before  End"},
 		{`{% comment %}{{ "hi" }}{% end %}`, ""},
 		{`{% comment %} {% comment %} {% end %} {% end %}`, ""},
+
+		{`This is {% raw %}{{ "Raw Liquid Code" }}{% end %}`, `This is {{ "Raw Liquid Code" }}`},
+		{`{% raw %}{% raw %}Raw{% end %}{% end %}`, "{% raw %}Raw{% end %}"},
 	}
 
 	for _, test := range tests {
