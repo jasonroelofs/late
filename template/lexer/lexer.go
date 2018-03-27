@@ -37,6 +37,13 @@ func (l *Lexer) NextToken() token.Token {
 		return tok
 	}
 
+	// Handle the case where two liquid tags are right next to
+	// each other, e.g. {{ 1 }}{{ 2 }}. We don't want an empty
+	// intermediate RAW token inbetween them.
+	if l.atLiquidStart() {
+		l.inLiquid = true
+	}
+
 	if l.inLiquid {
 		tok = l.parseNextLiquidToken()
 	} else {
