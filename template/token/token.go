@@ -3,8 +3,16 @@ package token
 type TokenType string
 
 type Token struct {
-	Type    TokenType
+	Type TokenType
+
+	// Literal is the post-lex'd content of the current token.
+	// This will not include any stray punctuation or whitespace
 	Literal string
+
+	// Raw is the plain content that was processed to create this
+	// token. It includes all punctuation and leading white space
+	// and can be used to perfectly reproduce the input.
+	Raw string
 }
 
 const (

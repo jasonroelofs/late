@@ -1,233 +1,221 @@
 package lexer
 
 import (
-	"strings"
-
 	"github.com/jasonroelofs/late/template/token"
 )
 
 type Lexer struct {
-	input string
+	input       string
+	eofPosition int
 
-	// Current position in the input string
-	position int
+	tokenStart   int
+	lookPosition int
 
-	// Next position in the input string
-	peekPosition int
-
-	// The currenty character under advisulment.
-	ch byte
-
-	// Are we parsing actual Liquid?
-	inLiquid bool
+	// Are we parsing actual Late?
+	// For anything outside of Late tags, we want to combine all text
+	// into a single Raw token that can be trivially included back in the
+	// expected output.
+	inCode bool
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: input}
-	l.readChar()
-	l.checkStartState()
-	return l
+	return &Lexer{
+		input:        input,
+		eofPosition:  len(input) - 1,
+		tokenStart:   0,
+		lookPosition: 0,
+	}
 }
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
-	if l.ch == 0 {
+	// With the assumption that the end of the previous token will include
+	// all of the characters from l.tokenStart to l.lookPosition (exclusive),
+	// the next token obviously starts at the current look position.
+	l.tokenStart = l.lookPosition
+
+	if l.atEOF() {
 		tok.Type = token.EOF
 		return tok
 	}
 
-	// Handle the case where two liquid tags are right next to
+	// Handle the case where two code tags are right next to
 	// each other, e.g. {{ 1 }}{{ 2 }}. We don't want an empty
 	// intermediate RAW token inbetween them.
-	if l.atLiquidStart() {
-		l.inLiquid = true
+	if !l.inCode && l.atCodeStart() {
+		l.inCode = true
 	}
 
-	if l.inLiquid {
-		tok = l.parseNextLiquidToken()
+	if l.inCode {
+		tok = l.parseNextCodeToken()
 	} else {
-		tok = l.parseUntilLiquid()
-		l.inLiquid = true
+		tok = l.parseUntilCode()
+		l.inCode = true
 	}
 
 	return tok
 }
 
-func (l *Lexer) parseUntilLiquid() token.Token {
-	var tok token.Token
-	startPos := l.position
-
-	for {
-		if l.atLiquidStart() {
-			break
-		}
-
-		if l.ch == 0 {
-			break
-		}
-
-		l.readChar()
-	}
-
-	tok.Type = token.RAW
-	tok.Literal = l.input[startPos:l.position]
-
-	return tok
-}
-
-func (l *Lexer) parseNextLiquidToken() (tok token.Token) {
+func (l *Lexer) parseNextCodeToken() (tok token.Token) {
 	l.skipWhitespace()
 
 	switch {
-	case l.next("{%end%}"):
-		tok = newTokenStr(token.END, "{% end %}")
-		l.inLiquid = false
-	case l.next("{%"):
-		tok = newTokenStr(token.OPEN_TAG, "{%")
-	case l.next("%}"):
-		tok = newTokenStr(token.CLOSE_TAG, "%}")
-		l.inLiquid = false
-	case l.next("{{"):
-		tok = newTokenStr(token.OPEN_VAR, "{{")
-	case l.next("}}"):
-		tok = newTokenStr(token.CLOSE_VAR, "}}")
-		l.inLiquid = false
-	case l.next(">="):
-		tok = newTokenStr(token.GT_EQ, ">=")
-	case l.next("<="):
-		tok = newTokenStr(token.LT_EQ, "<=")
-	case l.next("=="):
-		tok = newTokenStr(token.EQ, "==")
-	case l.next("!="):
-		tok = newTokenStr(token.NOT_EQ, "!=")
+	case l.test("{%end%}"):
+		l.inCode = false
+		tok = l.stringToken(token.END)
+	case l.test("{%"):
+		tok = l.stringToken(token.OPEN_TAG)
+	case l.test("%}"):
+		l.inCode = false
+		tok = l.stringToken(token.CLOSE_TAG)
+	case l.test("{{"):
+		tok = l.stringToken(token.OPEN_VAR)
+	case l.test("}}"):
+		l.inCode = false
+		tok = l.stringToken(token.CLOSE_VAR)
+	case l.test(">="):
+		tok = l.stringToken(token.GT_EQ)
+	case l.test("<="):
+		tok = l.stringToken(token.LT_EQ)
+	case l.test("=="):
+		tok = l.stringToken(token.EQ)
+	case l.test("!="):
+		tok = l.stringToken(token.NOT_EQ)
 	}
 
 	if tok.Type != "" {
 		return
 	}
 
-	switch l.ch {
+	switch l.peek() {
 	case '{':
-		tok = newToken(token.LBRACKET, l.ch)
+		tok = l.charToken(token.LBRACKET)
 	case '}':
-		tok = newToken(token.RBRACKET, l.ch)
+		tok = l.charToken(token.RBRACKET)
 	case '[':
-		tok = newToken(token.LSQUARE, l.ch)
+		tok = l.charToken(token.LSQUARE)
 	case ']':
-		tok = newToken(token.RSQUARE, l.ch)
+		tok = l.charToken(token.RSQUARE)
 	case '.':
-		tok = newToken(token.DOT, l.ch)
+		tok = l.charToken(token.DOT)
 	case ',':
-		tok = newToken(token.COMMA, l.ch)
+		tok = l.charToken(token.COMMA)
 	case ':':
-		tok = newToken(token.COLON, l.ch)
+		tok = l.charToken(token.COLON)
 	case '|':
-		tok = newToken(token.PIPE, l.ch)
+		tok = l.charToken(token.PIPE)
 	case '-':
-		tok = newToken(token.MINUS, l.ch)
+		tok = l.charToken(token.MINUS)
 	case '+':
-		tok = newToken(token.PLUS, l.ch)
+		tok = l.charToken(token.PLUS)
 	case '*':
-		tok = newToken(token.TIMES, l.ch)
+		tok = l.charToken(token.TIMES)
 	case '/':
-		tok = newToken(token.SLASH, l.ch)
+		tok = l.charToken(token.SLASH)
 	case '(':
-		tok = newToken(token.LPAREN, l.ch)
+		tok = l.charToken(token.LPAREN)
 	case ')':
-		tok = newToken(token.RPAREN, l.ch)
+		tok = l.charToken(token.RPAREN)
 	case '>':
-		tok = newToken(token.GT, l.ch)
+		tok = l.charToken(token.GT)
 	case '<':
-		tok = newToken(token.LT, l.ch)
+		tok = l.charToken(token.LT)
 	case '=':
-		tok = newToken(token.ASSIGN, l.ch)
+		tok = l.charToken(token.ASSIGN)
 	case '"', '\'':
-		tok.Type = token.STRING
-		tok.Literal = l.readString()
+		tok = l.manualToken(token.STRING, l.readString())
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default:
-		if isNumber(l.ch) {
-			tok.Type = token.NUMBER
-			tok.Literal = l.readNumber()
+		if isNumber(l.peek()) {
+			tok = l.manualToken(token.NUMBER, l.readNumber())
 			return
-		} else if isIdentifier(l.ch) {
-			tok.Literal = l.readIdentifier()
+		} else if isIdentifier(l.peek()) {
+			tok = l.manualToken(token.IDENT, l.readIdentifier())
+
 			switch tok.Literal {
 			case "true":
 				tok.Type = token.TRUE
 			case "false":
 				tok.Type = token.FALSE
-			default:
-				tok.Type = token.IDENT
 			}
 			return
 		} else {
-			tok = newToken(token.ILLEGAL, l.ch)
+			tok = l.charToken(token.ILLEGAL)
 		}
 	}
-	l.readChar()
 
 	return
 }
 
-func (l *Lexer) next(expect string) bool {
-	peek, realLen := l.peekMore(len(expect))
+func (l *Lexer) parseUntilCode() token.Token {
+	for {
+		if l.atEOF() {
+			break
+		}
 
-	// If we found a match then we need to make sure
-	// we kick ourselves forward enough in the string
-	// so parsing can continue after this tag.
-	if peek == expect {
-		l.moveForward(realLen)
-		return true
+		if l.atCodeStart() {
+			break
+		}
+
+		l.step()
 	}
 
-	return false
+	return l.stringToken(token.RAW)
 }
 
-func (l *Lexer) readNumber() string {
-	startPosition := l.position
+func (l *Lexer) test(expect string) bool {
+	peekWas := l.lookPosition
 
-	// We don't currently support starting a float number
-	// without a leading number
-	notFirst := false
-
-	for isNumber(l.ch) || (notFirst && l.ch == '.') {
-		l.readChar()
-		notFirst = true
-	}
-
-	return l.input[startPosition:l.position]
-}
-
-func (l *Lexer) readIdentifier() string {
-	startPosition := l.position
-
-	for isIdentifier(l.ch) {
-		l.readChar()
-	}
-
-	return l.input[startPosition:l.position]
-}
-
-func (l *Lexer) peekMore(peekLen int) (string, int) {
-	start := l.position
-	peekStr := &strings.Builder{}
-	at := 0
-
-	for at < peekLen {
+	for i := 0; i < len(expect); i++ {
 		l.skipWhitespace()
-		peekStr.WriteByte(l.ch)
-		l.readChar()
-		at += 1
+
+		if l.peek() != expect[i] {
+			l.lookPosition = peekWas
+			return false
+		}
+
+		l.step()
 	}
 
-	realLen := l.position - start
-	l.resetTo(start)
+	return true
+}
 
-	return peekStr.String(), realLen
+func (l *Lexer) skipWhitespace() {
+	for l.isWhitespace(l.peek()) {
+		l.step()
+	}
+}
+
+func (l *Lexer) isWhitespace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r'
+}
+
+func (l *Lexer) atEOF() bool {
+	return l.lookPosition > l.eofPosition
+}
+
+func (l *Lexer) atCodeStart() bool {
+	// Manual checking our characters from the input string here
+	// as we don't want to step the lookPosition
+	if l.lookPosition == l.eofPosition {
+		return false
+	}
+
+	at := l.input[l.lookPosition]
+	peek := l.input[l.lookPosition+1]
+
+	return at == '{' && (peek == '{' || peek == '%')
+}
+
+func (l *Lexer) peek() byte {
+	return l.input[l.lookPosition]
+}
+
+func (l *Lexer) step() {
+	l.lookPosition += 1
 }
 
 func (l *Lexer) readString() string {
@@ -235,66 +223,100 @@ func (l *Lexer) readString() string {
 	// so we can find our matching closing quote,
 	// making sure that we look for escaped quotes and don't prematurely
 	// end our string parsing.
-	prev := l.ch
-	openWith := l.ch
-	l.readChar()
+	prev := l.peek()
+	openWith := l.peek()
+	var buffer []byte
+	l.step()
 
-	startPosition := l.position
 	for {
-		if (l.ch == openWith && prev != '\\') || l.ch == 0 {
+		if (l.peek() == openWith && prev != '\\') || l.atEOF() {
 			break
 		}
 
-		prev = l.ch
-		l.readChar()
+		prev = l.peek()
+		buffer = append(buffer, l.peek())
+		l.step()
 	}
 
-	return l.input[startPosition:l.position]
+	// And finally move onto the closing quote
+	l.step()
+
+	return string(buffer)
 }
 
-func (l *Lexer) skipWhitespace() {
-	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
-		l.readChar()
-	}
-}
+func (l *Lexer) readNumber() string {
+	// We don't currently support starting a float number
+	// without a leading number, e.g. don't support ".1234".
+	notFirst := false
+	var buffer []byte
 
-func (l *Lexer) checkStartState() {
-	l.inLiquid = l.atLiquidStart()
-}
-
-func (l *Lexer) atLiquidStart() bool {
-	return (l.ch == '{' && (l.peek() == '{' || l.peek() == '%'))
-}
-
-func (l *Lexer) moveForward(num int) {
-	for i := 0; i < num; i++ {
-		l.readChar()
-	}
-}
-
-func (l *Lexer) readChar() {
-	if l.peekPosition >= len(l.input) {
-		l.ch = 0
-	} else {
-		l.ch = l.input[l.peekPosition]
+	for isNumber(l.peek()) || (notFirst && l.peek() == '.') {
+		buffer = append(buffer, l.peek())
+		l.step()
+		notFirst = true
 	}
 
-	l.position = l.peekPosition
-	l.peekPosition += 1
+	return string(buffer)
 }
 
-func (l *Lexer) resetTo(pos int) {
-	l.position = pos
-	l.peekPosition = l.position + 1
-	l.ch = l.input[l.position]
-}
+func (l *Lexer) readIdentifier() string {
+	var buffer []byte
 
-func (l *Lexer) peek() byte {
-	if l.peekPosition >= len(l.input) {
-		return 0
-	} else {
-		return l.input[l.peekPosition]
+	for isIdentifier(l.peek()) {
+		buffer = append(buffer, l.peek())
+		l.step()
 	}
+
+	return string(buffer)
+}
+
+// Build a token out of the current single character
+func (l *Lexer) charToken(t token.TokenType) token.Token {
+	char := string(l.peek())
+
+	tok := token.Token{
+		Type:    t,
+		Literal: char,
+		Raw:     char,
+	}
+
+	// If we're here, it means that lookPosition is the character we need to store
+	// in the token so to fit our rule the lookPosition is always at the start
+	// of the next token, kick us forward.
+	l.step()
+
+	return tok
+}
+
+// Build a token out of the full string between tokenStart and lookPosition
+func (l *Lexer) stringToken(t token.TokenType) token.Token {
+	var buffer []byte
+
+	for i := l.tokenStart; i < l.lookPosition; i++ {
+		if l.isWhitespace(l.input[i]) {
+			continue
+		}
+
+		buffer = append(buffer, l.input[i])
+	}
+
+	tok := l.manualToken(t, string(buffer))
+
+	if tok.Type == token.RAW {
+		tok.Literal = tok.Raw
+	}
+
+	return tok
+}
+
+func (l *Lexer) manualToken(t token.TokenType, literal string) token.Token {
+	tok := token.Token{
+		Type:    t,
+		Literal: literal,
+		Raw:     l.input[l.tokenStart:l.lookPosition],
+	}
+
+	return tok
 }
 
 func isNumber(ch byte) bool {
@@ -306,12 +328,4 @@ func isIdentifier(ch byte) bool {
 		'A' <= ch && ch <= 'Z' ||
 		'0' <= ch && ch <= '9' ||
 		ch == '_'
-}
-
-func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return newTokenStr(tokenType, string(ch))
-}
-
-func newTokenStr(tokenType token.TokenType, tok string) token.Token {
-	return token.Token{Type: tokenType, Literal: tok}
 }

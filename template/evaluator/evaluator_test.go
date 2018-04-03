@@ -153,10 +153,9 @@ func TestTags(t *testing.T) {
 	for _, test := range tests {
 		results := evalInput(t, test.input, context.New())
 
-		checkStatementCount(t, results, 3)
+		checkStatementCount(t, results, 2)
 		checkObject(t, results[0], object.OBJ_NULL, nil)
-		checkObject(t, results[1], object.OBJ_STRING, "")
-		checkObject(t, results[2], test.expectedType, test.expected)
+		checkObject(t, results[1], test.expectedType, test.expected)
 	}
 }
 
