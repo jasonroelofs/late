@@ -1,13 +1,13 @@
 This is the basic syntax for late.
 
-Output is handled through double curly brackets {% raw %}('{{ ... }}'){% end %}
+Output is handled through double curly brackets: `{{{ {{ ... }} }}}`
 
 >  I call this page {{ title }}.
 
 <  I call this page Late Syntax.
 
 Output can be further manipulated through what are called filters. Filters can be chained
-together using the vertical bar (`|`)
+together using the vertical bar (`|`).
 
 >  I call this page {{ title | upcase }}.
 
@@ -15,20 +15,20 @@ together using the vertical bar (`|`)
 
 Control structures like assignments, loops, and conditionals, as well as any operation that
 doesn't immediately create output in the final document are implemented as tags. Tags are denoted
-by the curly-percent sequence {% raw %}('{% ... %}'){% end %}.
+by the bracket-percent sequence: {{{ `{% ... %}` }}}.
 
 >  {% assign section = "Talking about Tags" %}
 >  {{ tags }}.
 
 <  Talking about Tags.
 
-Many tags come in block form and are closed by an explicit end tag {% raw %}('{% ... %} ... {% end %}'){% end %}.
+Many tags come in block form and are closed by an explicit end tag: {{{ `{% ... %} ... {% end %}` }}}.
 
->  {% raw %}
->    This includes raw, unconverted {{ "liquid syntax" | a_filter }}.
+>  {% if true %}
+>    This statement is true!
 >  {% end %}
 
-<  This includes raw, unconverted {{ "liquid syntax" | a_filter }}.
+<  This statement is true!
 
 A template can be given objects with nested values. These values are accessible via dot notation (`.`).
 
@@ -101,3 +101,22 @@ which will provides easy substring or array inclusion checks inside of condition
 <  true
 <  false
 <  I see the number 3!
+
+To output raw liquid in the result, or to ensure that the templating engine doesn't try to execute
+text that may look like Late code, use triple brackets: `{{ "{{{ ... }}}" }}`.
+
+> {{{
+>   This contains raw {{ "liquid" }} code.
+> }}}
+
+< This contains raw {{ "liquid" }} code.
+
+Similarly, if you want to comment out or otherwise disable a section of the template from
+all parsing and evaluation, do so with the bracket-hash: {{{ `{# ... #}` }}}.
+
+> {#
+>   This will not show up in the results.
+> #}
+> But this will.
+
+< But this will.

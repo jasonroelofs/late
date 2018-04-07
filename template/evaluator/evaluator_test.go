@@ -144,7 +144,6 @@ func TestTags(t *testing.T) {
 		expectedType object.ObjectType
 		expected     interface{}
 	}{
-		// {{ page = "home" }}
 		{`{% assign page = "home" %}{{ page }}`, object.OBJ_STRING, "home"},
 		{"{% assign count = 10 %}{{ count }}", object.OBJ_NUMBER, float64(10)},
 		{`{% assign page_size = "home" | size %}{{ page_size }}`, object.OBJ_NUMBER, float64(4)},

@@ -64,7 +64,7 @@ type RawStatement struct {
 }
 
 func (r *RawStatement) statementNode() {}
-func (r *RawStatement) String() string { return r.Token.Literal }
+func (r *RawStatement) String() string { return r.Token.Raw }
 
 type VariableStatement struct {
 	Token      token.Token

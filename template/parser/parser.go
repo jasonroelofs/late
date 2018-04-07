@@ -90,10 +90,6 @@ func New(lexer *lexer.Lexer) *Parser {
 	return p
 }
 
-func (p *Parser) CurrentTokenName() string {
-	return p.currToken.Literal
-}
-
 func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }
@@ -138,6 +134,10 @@ func (p *Parser) parseNext() ast.Statement {
 		return p.parseVariableStatement()
 	case token.OPEN_TAG:
 		return p.parseTagStatement()
+	case token.OPEN_COMMENT:
+		return p.parseCommentStatement()
+	case token.OPEN_RAW:
+		return p.parseVerbatimStatement()
 	default:
 		return p.parseRawStatement()
 	}
@@ -145,6 +145,33 @@ func (p *Parser) parseNext() ast.Statement {
 
 func (p *Parser) parseRawStatement() *ast.RawStatement {
 	return &ast.RawStatement{Token: p.currToken}
+}
+
+func (p *Parser) parseCommentStatement() *ast.RawStatement {
+	p.nextToken()
+
+	if !p.expectPeek(token.CLOSE_COMMENT) {
+		return nil
+	}
+
+	p.nextToken()
+	return &ast.RawStatement{}
+}
+
+func (p *Parser) parseVerbatimStatement() *ast.RawStatement {
+	// Skip the starting {{{
+	p.nextToken()
+
+	stmt := p.parseRawStatement()
+
+	if !p.expectPeek(token.CLOSE_RAW) {
+		return nil
+	}
+
+	// Skip past the ending }}}
+	p.nextToken()
+
+	return stmt
 }
 
 func (p *Parser) parseVariableStatement() *ast.VariableStatement {
@@ -185,7 +212,7 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 
 	rules := stmt.Tag.Parse()
 
-	for _, parseRule := range rules {
+	for _, parseRule := range rules.Rules {
 		expectedTokenType := p.parseRuleToTokenType(parseRule)
 
 		if p.peekTokenIs(token.CLOSE_TAG) || p.peekTokenIs(token.EOF) {

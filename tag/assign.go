@@ -20,13 +20,15 @@ func (a *Assign) Block() bool {
 	return false
 }
 
-func (a *Assign) Parse() []ParseRule {
-	return []ParseRule{Identifier(), Token(token.ASSIGN), Expression()}
+func (a *Assign) Parse() *ParseConfig {
+	return &ParseConfig{
+		Rules: []ParseRule{Identifier(), Token(token.ASSIGN), Expression()},
+	}
 }
 
-func (a *Assign) Eval(env Environment, results []object.Object, _ []Statement) object.Object {
-	varName := results[0].Value().(string)
-	result := results[2]
+func (a *Assign) Eval(env Environment, results *ParseResult) object.Object {
+	varName := results.Nodes[0].Value().(string)
+	result := results.Nodes[2]
 
 	env.Set(varName, result)
 	return object.NULL

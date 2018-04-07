@@ -189,7 +189,7 @@ func TestEmptyTemplate(t *testing.T) {
 	testTemplateGeneratesTokens(t, input, tests)
 }
 
-func TestRawTokenWithWhitespace(t *testing.T) {
+func TestTokenRawWithWhitespace(t *testing.T) {
 	input := `
 		{{ "Some text here" }} {{ 1 }}
 		{% assign %} {% end %}`
@@ -233,6 +233,31 @@ func TestRawTokenWithWhitespace(t *testing.T) {
 			)
 		}
 	}
+}
+
+func TestCommentsAndRaw(t *testing.T) {
+	input := `
+		{{{ This is {{ "Raw Liquid" }} }}}
+		{# Ignore me {% {{ #}
+		{{{ Invalid {{ !Liquid {% }}}`
+
+	tests := []ExpectedToken{
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_RAW, "{{{"},
+		{token.RAW, " This is {{ \"Raw Liquid\" }} "},
+		{token.CLOSE_RAW, "}}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_COMMENT, "{#"},
+		{token.RAW, " Ignore me {% {{ "},
+		{token.CLOSE_COMMENT, "#}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_RAW, "{{{"},
+		{token.RAW, " Invalid {{ !Liquid {% "},
+		{token.CLOSE_RAW, "}}}"},
+		{token.EOF, ""},
+	}
+
+	testTemplateGeneratesTokens(t, input, tests)
 }
 
 func testTemplateGeneratesTokens(t *testing.T, template string, expectedTokens []ExpectedToken) {

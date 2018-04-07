@@ -76,20 +76,23 @@ func TestRender_Tags(t *testing.T) {
 		{`{% assign page = "home" | upcase %}{{ page }}`, "HOME"},
 		{`{% assign page = "Here" | replace: "Here", with: "There" %}{{ page }}`, "There"},
 
-		{`Before {% comment %} Middle {% end %} End`, "Before  End"},
-		{`{% comment %}{{ "hi" }}{% end %}`, ""},
-		{`{% comment %} {% comment %} {% end %} {% end %}`, ""},
+		{`Before {# Middle #} End`, "Before  End"},
+		{`{# {{ "hi" }} #}`, ""},
 
-		{`This is {% raw %}{{ "Raw Liquid Code" }}{% end %}`, `This is {{ "Raw Liquid Code" }}`},
-		{`{% raw %}{% raw %}Raw{% end %}{% end %}`, "{% raw %}Raw{% end %}"},
+		{`This is {{{ {{ "Raw Late Code" }} }}}`, `This is  {{ "Raw Late Code" }} `},
+
+		// Raw and Comment should not try to parse code inside of their blocks.
+		// I would expect invalid liquid to be ignored, not erroring out.
+		{`This is {{{ Invalid {% {{ >=}}}`, `This is  Invalid {% {{ >=`},
+		{`{# Don't {{ break {% ==#}`, ""},
 	}
 
-	for _, test := range tests {
+	for i, test := range tests {
 		tpl := New(test.input)
 		results := tpl.Render(context.New())
 
 		if results != test.expected {
-			t.Errorf("Failed to render. Expected '%s' got '%s'", test.expected, results)
+			t.Errorf("(%d) Failed to render. Expected '%s' got '%s'", i, test.expected, results)
 		}
 	}
 }

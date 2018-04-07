@@ -308,11 +308,34 @@ func TestTags(t *testing.T) {
 	}
 }
 
+func TestCommentsAndRaw(t *testing.T) {
+	tests := []struct {
+		input       string
+		expectedRaw string
+	}{
+		{`{{{ This is {{ "Raw Liquid" }} }}}`, ` This is {{ "Raw Liquid" }} `},
+		{`{{{No {% white-space}}}`, `No {% white-space`},
+		{`{# Comment YO #}`, ""},
+	}
+
+	for _, test := range tests {
+		template := parseTest(t, test.input)
+		checkStatementCount(t, template, 1)
+
+		stmt := template.Statements[0]
+
+		if stmt.String() != test.expectedRaw {
+			t.Fatalf("Raw statement not correct. Expected '%s' Got '%s'", test.expectedRaw, stmt.String())
+		}
+	}
+}
+
 func TestTagErrors(t *testing.T) {
 	tests := []struct {
 		input    string
 		errorStr string
 	}{
+		// Statement tags and parameter expectations
 		{`{% explode %}`, "Unknown tag 'explode'"},
 		{`{% assign %}`, "Error parsing tag 'assign': expected IDENT"},
 		{`{% assign var %}`, "Error parsing tag 'assign': expected ASSIGN"},

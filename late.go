@@ -40,6 +40,4 @@ func init() {
 	AddFilter("replace", filter.Replace)
 
 	AddTag("assign", func() tag.Tag { return new(tag.Assign) })
-	AddTag("comment", func() tag.Tag { return new(tag.Comment) })
-	AddTag("raw", func() tag.Tag { return new(tag.Raw) })
 }

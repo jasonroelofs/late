@@ -1,8 +1,31 @@
 package tag
 
 import (
+	"github.com/jasonroelofs/late/object"
 	"github.com/jasonroelofs/late/template/token"
 )
+
+/**
+ * ParserConfig is used to apply new rules and options to the parser and evaluator
+ * to properly handle the current tag.
+ */
+type ParseConfig struct {
+	// Rules contains a list of rules informing the parser how to parse
+	// the rest of the immediate tag. The rules will be mapped into object.Object records
+	// and passed into Eval() during the evaluation phase.
+	Rules []ParseRule
+}
+
+// ParseResult is passed into the tags Eval() method during evaulation phase.
+type ParseResult struct {
+	// Nodes is the list of object.Object records that map directly to whatever
+	// was provided in the ParseConfig.Rules field.
+	Nodes []object.Object
+
+	// For block-type tags, this list of statements correspond to the content of the
+	// block and should be evaulated in order according to the rules of the tag.
+	Statements []Statement
+}
 
 /**
  * Parsing Rules

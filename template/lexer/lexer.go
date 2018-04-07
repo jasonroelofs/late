@@ -16,6 +16,12 @@ type Lexer struct {
 	// into a single Raw token that can be trivially included back in the
 	// expected output.
 	inCode bool
+
+	// We support Comments ({# #}) and Raw ({{{ }}}) right here in the lexer,
+	// building out tokens so the parser can do the right thing for these requests.
+	// As comments and raw code can contain invalid liquid, we need to flag the lexer
+	// to just parse everything as a single RAW token between the delimiters.
+	nextTokenEndsAt string
 }
 
 func New(input string) *Lexer {
@@ -47,7 +53,10 @@ func (l *Lexer) NextToken() token.Token {
 		l.inCode = true
 	}
 
-	if l.inCode {
+	if len(l.nextTokenEndsAt) > 0 {
+		tok = l.parseUntilTokenEnd()
+		l.nextTokenEndsAt = ""
+	} else if l.inCode {
 		tok = l.parseNextCodeToken()
 	} else {
 		tok = l.parseUntilCode()
@@ -64,6 +73,18 @@ func (l *Lexer) parseNextCodeToken() (tok token.Token) {
 	case l.test("{%end%}"):
 		l.inCode = false
 		tok = l.stringToken(token.END)
+	case l.test("{{{"):
+		tok = l.stringToken(token.OPEN_RAW)
+		l.nextTokenEndsAt = "}}}"
+	case l.test("}}}"):
+		l.inCode = false
+		tok = l.stringToken(token.CLOSE_RAW)
+	case l.test("{#"):
+		tok = l.stringToken(token.OPEN_COMMENT)
+		l.nextTokenEndsAt = "#}"
+	case l.test("#}"):
+		l.inCode = false
+		tok = l.stringToken(token.CLOSE_COMMENT)
 	case l.test("{%"):
 		tok = l.stringToken(token.OPEN_TAG)
 	case l.test("%}"):
@@ -150,6 +171,27 @@ func (l *Lexer) parseNextCodeToken() (tok token.Token) {
 	return
 }
 
+func (l *Lexer) parseUntilTokenEnd() token.Token {
+	tokenEndLen := len(l.nextTokenEndsAt)
+
+	for {
+		if l.lookPosition > tokenEndLen {
+			if l.input[l.lookPosition-tokenEndLen:l.lookPosition] == l.nextTokenEndsAt {
+				l.lookPosition -= tokenEndLen
+				break
+			}
+		}
+
+		if l.atEOF() {
+			break
+		}
+
+		l.step()
+	}
+
+	return l.stringToken(token.RAW)
+}
+
 func (l *Lexer) parseUntilCode() token.Token {
 	for {
 		if l.atEOF() {
@@ -172,7 +214,7 @@ func (l *Lexer) test(expect string) bool {
 	for i := 0; i < len(expect); i++ {
 		l.skipWhitespace()
 
-		if l.peek() != expect[i] {
+		if l.atEOF() || l.peek() != expect[i] {
 			l.lookPosition = peekWas
 			return false
 		}
@@ -184,7 +226,7 @@ func (l *Lexer) test(expect string) bool {
 }
 
 func (l *Lexer) skipWhitespace() {
-	for l.isWhitespace(l.peek()) {
+	for !l.atEOF() && l.isWhitespace(l.peek()) {
 		l.step()
 	}
 }
@@ -207,7 +249,7 @@ func (l *Lexer) atCodeStart() bool {
 	at := l.input[l.lookPosition]
 	peek := l.input[l.lookPosition+1]
 
-	return at == '{' && (peek == '{' || peek == '%')
+	return at == '{' && (peek == '{' || peek == '%' || peek == '#')
 }
 
 func (l *Lexer) peek() byte {

@@ -12,8 +12,8 @@ import (
 
 type Tag interface {
 	Block() bool
-	Parse() []ParseRule
-	Eval(Environment, []object.Object, []Statement) object.Object
+	Parse() *ParseConfig
+	Eval(Environment, *ParseResult) object.Object
 }
 
 type Environment interface {

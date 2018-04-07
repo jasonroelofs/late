@@ -106,7 +106,7 @@ func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
 		}
 	}
 
-	return node.Tag.Eval(e, results, blockStmts)
+	return node.Tag.Eval(e, &tag.ParseResult{Nodes: results, Statements: blockStmts})
 }
 
 func (e *Evaluator) evalInfix(operator string, left, right object.Object) object.Object {
