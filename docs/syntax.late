@@ -40,7 +40,7 @@ A template can be given objects with nested values. These values are accessible 
 
 Arrays are first-class citizens in Late (see data_types for more information). Individual elements of an array are accessible through square brackets (`[]`). Array access indexes are 0-based.
 
->  {% assign list = "1,2,3,4,5" | split: "," %}
+>  {% assign list = [1, 2, 3, 4, 5] %}
 >  {{ list[1] }} + {{ list[2] }} == {{ list[4] }}
 
 <  2 + 3 == 5
@@ -81,12 +81,14 @@ You can also chain these comparisons together using `and` and `or` or their symb
 <  false
 <  true
 
-Do note that chaining multiple comparisons together will always evaluate from left-to-right.
+Do note that chaining multiple comparisons together will always evaluate from left-to-right. However precedence can be manually applied by grouping with parentheses.
 
 >  {{ true and false and true or true }}
+>  {{ true and (false and (true or true)) }}
 >  {{ false or true and false }}
 
 <  true
+<  false
 <  false
 
 For string and/or array comparisons, there is a special operator available, `contains`,

@@ -53,7 +53,7 @@ Array. A contiguous list of values of any supported data type. Any given array c
 
 Nil. This value is used when there is nothing at a given variable or requested object location.
 
->  {% assign nothing %}
+>  {% assign nothing = null %}
 >  {% if nothing %}
 >    There is something?
 >  {% else %}

@@ -7,7 +7,7 @@ Tags allow for non-output tools, like variable assignment, loops, and conditiona
 
 Loops
 
->  {% assign list = "1,2,3,4,5" | split: "," %}
+>  {% assign list = [1, 2, 3, 4, 5] %}
 >  {% for item in list %}
 >    {{ item }}
 >  {% end}
@@ -34,3 +34,13 @@ Conditionals
 <  The list is big!
 <
 <  The list is really big!
+
+Capture
+
+>  {% assign site_title = "My Cool Site" %}
+>  {% capture header %}
+>    <title>{{ site_title }}</title>
+>  {% end %}
+>  {{ header }}
+
+<  <title>My Cool Site</title>
