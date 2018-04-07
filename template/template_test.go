@@ -1,6 +1,7 @@
 package template
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/jasonroelofs/late/context"
@@ -67,15 +68,11 @@ func TestRenderWithInitialState(t *testing.T) {
 	}
 }
 
-func TestRender_Tags(t *testing.T) {
+func TestRender_RawAndComments(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
 	}{
-		{`{% assign page = "home" %}{{ page }}`, "home"},
-		{`{% assign page = "home" | upcase %}{{ page }}`, "HOME"},
-		{`{% assign page = "Here" | replace: "Here", with: "There" %}{{ page }}`, "There"},
-
 		{`Before {# Middle #} End`, "Before  End"},
 		{`{# {{ "hi" }} #}`, ""},
 
@@ -93,6 +90,43 @@ func TestRender_Tags(t *testing.T) {
 
 		if results != test.expected {
 			t.Errorf("(%d) Failed to render. Expected '%s' got '%s'", i, test.expected, results)
+		}
+	}
+}
+
+func TestRender_Tags(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`{% assign page = "home" %}{{ page }}`, "home"},
+		{`{% assign page = "home" | upcase %}{{ page }}`, "HOME"},
+		{`{% assign page = "Here" | replace: "Here", with: "There" %}{{ page }}`, "There"},
+
+		{`{% capture math %}1 + 2 == {{ 1 + 2 }}{% end %}{{ math }}`, "1 + 2 == 3"},
+		{`{% capture outer %}
+				{% capture inner %}
+					{{ 1 + 2 }}
+				{% end %}
+				1 + 2 == {{ inner }}
+			{% end %}
+			{{ outer }}`,
+			"1 + 2 == 3",
+		},
+	}
+
+	// TODO: Build a set of rules around whitespace management.
+	// For now, clear out all newlines and tab characters for test comparisons.
+	replacer := strings.NewReplacer("\n", "", "\r", "", "\t", "")
+
+	for i, test := range tests {
+		tpl := New(test.input)
+		results := tpl.Render(context.New())
+
+		trimmed := replacer.Replace(results)
+
+		if trimmed != test.expected {
+			t.Errorf("(%d) Failed to render. Expected '%s' got '%s'", i, test.expected, trimmed)
 		}
 	}
 }

@@ -341,6 +341,10 @@ func TestTagErrors(t *testing.T) {
 		{`{% assign var %}`, "Error parsing tag 'assign': expected ASSIGN"},
 		{`{% assign var = %}`, "Error parsing tag 'assign': expected EXPRESSION"},
 		{`{% assign var 10 %}`, "Error parsing tag 'assign': expected ASSIGN found NUMBER"},
+
+		{`{% capture %}`, "Error parsing tag 'capture': expected IDENT"},
+		{`{% capture %}{% end %}`, "Error parsing tag 'capture': expected IDENT"},
+		{`{% capture var %}`, "Error parsing tag 'capture': expected END found EOF"},
 	}
 
 	for _, test := range tests {

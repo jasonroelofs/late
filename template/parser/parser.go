@@ -251,6 +251,10 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 
 	if stmt.Tag.Block() {
 		stmt.BlockStatement = p.parseBlockStatement()
+
+		if p.currToken.Type != token.END {
+			p.parserErrorf("Error parsing tag '%s': expected %s found %s", stmt.TagName, token.END, p.currToken.Type)
+		}
 	}
 
 	return stmt

@@ -17,6 +17,7 @@ type Tag interface {
 }
 
 type Environment interface {
+	Eval(Statement) object.Object
 	Get(string) object.Object
 	Set(string, interface{})
 }

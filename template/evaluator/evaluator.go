@@ -24,7 +24,7 @@ func (e *Evaluator) Run() []object.Object {
 	var objects []object.Object
 
 	for _, statement := range e.template.Statements {
-		result := e.Eval(statement)
+		result := e.eval(statement)
 		objects = append(objects, result)
 	}
 
@@ -39,31 +39,35 @@ func (e *Evaluator) Get(variable string) object.Object {
 	return e.context.Get(variable)
 }
 
-func (e *Evaluator) Eval(node ast.Node) object.Object {
+func (e *Evaluator) Eval(node tag.Statement) object.Object {
+	return e.eval(node.(ast.Node))
+}
+
+func (e *Evaluator) eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	// Top-level Statements
 	case *ast.RawStatement:
 		return object.New(node.String())
 
 	case *ast.VariableStatement:
-		return e.Eval(node.Expression)
+		return e.eval(node.Expression)
 
 	case *ast.TagStatement:
 		return e.evalTagStatement(node)
 
 	// Expressions
 	case *ast.InfixExpression:
-		left := e.Eval(node.Left)
-		right := e.Eval(node.Right)
+		left := e.eval(node.Left)
+		right := e.eval(node.Right)
 		return e.evalInfix(node.Operator, left, right)
 
 	case *ast.PrefixExpression:
-		right := e.Eval(node.Right)
+		right := e.eval(node.Right)
 		return e.evalPrefix(node.Operator, right)
 
 	case *ast.FilterExpression:
-		input := e.Eval(node.Input)
-		filter := e.Eval(node.Filter)
+		input := e.eval(node.Input)
+		filter := e.eval(node.Filter)
 		return e.evalFilter(input, filter)
 
 	// Literals
@@ -95,7 +99,7 @@ func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
 		case *ast.Identifier:
 			results = append(results, object.New(node.Value))
 		default:
-			results = append(results, e.Eval(node))
+			results = append(results, e.eval(node))
 		}
 	}
 
@@ -175,7 +179,7 @@ func (e *Evaluator) evalFilterLiteral(node *ast.FilterLiteral) object.Object {
 	}
 
 	for paramName, paramExp := range node.Parameters {
-		filterObj.Parameters[paramName] = e.Eval(paramExp)
+		filterObj.Parameters[paramName] = e.eval(paramExp)
 	}
 
 	return filterObj
