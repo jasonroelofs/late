@@ -265,6 +265,20 @@ func TestArrayPrecedence(t *testing.T) {
 	}
 }
 
+func TestIndexAccess(t *testing.T) {
+	template := parseTest(t, `{{ list[1] }}`)
+	checkStatementCount(t, template, 1)
+	stmt := getVariableStatement(t, template, 0)
+
+	exp, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("stmt is not an IndexExpression, got %T", stmt.Expression)
+	}
+
+	checkIdentifierExpression(t, exp.Left, "list")
+	checkNumberLiteral(t, exp.Index, 1)
+}
+
 func TestFilters(t *testing.T) {
 	tests := []struct {
 		input          string

@@ -70,6 +70,11 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 		filter := e.eval(node.Filter)
 		return e.evalFilter(input, filter)
 
+	case *ast.IndexExpression:
+		left := e.eval(node.Left)
+		index := e.eval(node.Index)
+		return e.evalIndex(left, index)
+
 	// Literals
 	case *ast.NumberLiteral:
 		return object.New(node.Value)
@@ -199,6 +204,27 @@ func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
 	}
 
 	return filterFunc.Call(input, filterParams)
+}
+
+func (e *Evaluator) evalIndex(left, index object.Object) object.Object {
+	switch {
+	case left.Type() == object.OBJ_ARRAY && index.Type() == object.OBJ_NUMBER:
+		return e.evalArrayIndex(left, index)
+	default:
+		// Unknown action "index" on this object
+		return object.NULL
+	}
+}
+
+func (e *Evaluator) evalArrayIndex(left, index object.Object) object.Object {
+	array := left.(*object.Array)
+	idx := int(index.Value().(float64))
+
+	if idx < 0 || len(array.Elements) <= idx {
+		return object.NULL
+	}
+
+	return array.Elements[idx]
 }
 
 func (e *Evaluator) evalArrayLiteral(node *ast.ArrayLiteral) object.Object {

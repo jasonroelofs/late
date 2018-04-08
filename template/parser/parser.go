@@ -23,21 +23,23 @@ const (
 	SUM     // +, -
 	PRODUCT // *, /
 	PREFIX  // -X
+	INDEX   // []
 )
 
 var precedences = map[token.TokenType]int{
-	token.ASSIGN: ASSIGN,
-	token.PIPE:   PIPE,
-	token.EQ:     EQUALS,
-	token.NOT_EQ: EQUALS,
-	token.LT:     COMPARE,
-	token.GT:     COMPARE,
-	token.LT_EQ:  COMPARE,
-	token.GT_EQ:  COMPARE,
-	token.PLUS:   SUM,
-	token.MINUS:  SUM,
-	token.SLASH:  PRODUCT,
-	token.TIMES:  PRODUCT,
+	token.ASSIGN:  ASSIGN,
+	token.PIPE:    PIPE,
+	token.EQ:      EQUALS,
+	token.NOT_EQ:  EQUALS,
+	token.LT:      COMPARE,
+	token.GT:      COMPARE,
+	token.LT_EQ:   COMPARE,
+	token.GT_EQ:   COMPARE,
+	token.PLUS:    SUM,
+	token.MINUS:   SUM,
+	token.SLASH:   PRODUCT,
+	token.TIMES:   PRODUCT,
+	token.LSQUARE: INDEX,
 }
 
 type (
@@ -82,6 +84,7 @@ func New(lexer *lexer.Lexer) *Parser {
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
 	p.registerInfix(token.TIMES, p.parseInfixExpression)
 	p.registerInfix(token.PIPE, p.parseFilterExpression)
+	p.registerInfix(token.LSQUARE, p.parseIndexExpression)
 
 	// Read the first two tokens to pre-fill
 	// curr and peek token values
@@ -393,6 +396,23 @@ func (p *Parser) parseFilterParameters(initialParam string) map[string]ast.Expre
 	}
 
 	return list
+}
+
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	expr := &ast.IndexExpression{
+		Token: p.currToken,
+		Left:  left,
+	}
+
+	p.nextToken()
+	expr.Index = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RSQUARE) {
+		return nil
+	}
+
+	p.nextToken()
+	return expr
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {

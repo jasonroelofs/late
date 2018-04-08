@@ -163,6 +163,24 @@ func (i *InfixExpression) String() string {
 	return out.String()
 }
 
+type IndexExpression struct {
+	Token token.Token
+	Left  Expression
+	Index Expression
+}
+
+func (i *IndexExpression) expressionNode() {}
+func (i *IndexExpression) String() string {
+	output := strings.Builder{}
+
+	output.WriteString(i.Left.String())
+	output.WriteString("[")
+	output.WriteString(i.Index.String())
+	output.WriteString("]")
+
+	return output.String()
+}
+
 // FilterExpression is the parent expression holder node that
 // keeps track of filter requests. Specifically, it references
 // the "input" side and the "filter" side of a call like:
@@ -277,14 +295,13 @@ type ArrayLiteral struct {
 func (a *ArrayLiteral) expressionNode() {}
 func (a *ArrayLiteral) String() string {
 	output := strings.Builder{}
-	output.WriteString("[")
-
 	var parts []string
 
 	for _, expr := range a.Expressions {
 		parts = append(parts, expr.String())
 	}
 
+	output.WriteString("[")
 	output.WriteString(strings.Join(parts, ","))
 	output.WriteString("]")
 

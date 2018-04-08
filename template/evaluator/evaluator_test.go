@@ -132,6 +132,30 @@ func TestArrays(t *testing.T) {
 	}
 }
 
+func TestArrayAccess(t *testing.T) {
+	tests := []struct {
+		input        string
+		expectedType object.ObjectType
+		expected     interface{}
+	}{
+		{`{{ [][0] }}`, object.OBJ_NULL, nil},
+		{`{{ [][-1] }}`, object.OBJ_NULL, nil},
+		{`{{ [1, 2, 3][0] }}`, object.OBJ_NUMBER, float64(1)},
+		{`{{ [1, 2, 3][1] }}`, object.OBJ_NUMBER, float64(2)},
+		{`{{ [1, 2, 3][2] }}`, object.OBJ_NUMBER, float64(3)},
+		{`{{ [1, 2, 3][3] }}`, object.OBJ_NULL, nil},
+		{`{{ ["one", 2][0] }}`, object.OBJ_STRING, "one"},
+		{`{{ [1,2,5][ [1,2][1] ] }}`, object.OBJ_NUMBER, float64(5)},
+	}
+
+	for _, test := range tests {
+		results := evalInput(t, test.input, context.New())
+
+		checkStatementCount(t, results, 1)
+		checkObject(t, results[0], test.expectedType, test.expected)
+	}
+}
+
 func TestFilters(t *testing.T) {
 	tests := []struct {
 		input        string
