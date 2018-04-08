@@ -65,12 +65,12 @@ func TestNumberLiteral(t *testing.T) {
 	checkStatementCount(t, template, 3)
 
 	stmt := getVariableStatement(t, template, 0)
-	checkNumberExpression(t, stmt.Expression, 400)
+	checkNumberLiteral(t, stmt.Expression, 400)
 
 	// The 2nd statement is a Raw node between the two
 
 	stmt = getVariableStatement(t, template, 2)
-	checkNumberExpression(t, stmt.Expression, 3.1415)
+	checkNumberLiteral(t, stmt.Expression, 3.1415)
 }
 
 func TestBooleanLiteral(t *testing.T) {
@@ -172,13 +172,13 @@ func TestInfixExpressions(t *testing.T) {
 			t.Fatalf("(%d) stmt is not an InfixExpression, got %T", i, stmt.Expression)
 		}
 
-		checkNumberExpression(t, exp.Left, test.leftValue)
+		checkNumberLiteral(t, exp.Left, test.leftValue)
 
 		if exp.Operator != test.operator {
 			t.Fatalf("Operator was wrong, expected '%s' got '%s'", test.operator, exp.Operator)
 		}
 
-		checkNumberExpression(t, exp.Right, test.rightValue)
+		checkNumberLiteral(t, exp.Right, test.rightValue)
 	}
 }
 
@@ -215,6 +215,55 @@ func TestInfixExpressions(t *testing.T) {
 //		}
 //	}
 //}
+
+func TestArrayParsing(t *testing.T) {
+	template := parseTest(t, `{{ [1, "two", three] }}`)
+	checkStatementCount(t, template, 1)
+
+	stmt := getVariableStatement(t, template, 0)
+	exp, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("stmt is not an ArrayLiteral, got %T", stmt.Expression)
+	}
+
+	if len(exp.Expressions) != 3 {
+		t.Fatalf("Wrong number of expressions: got %d", len(exp.Expressions))
+	}
+
+	checkNumberLiteral(t, exp.Expressions[0], float64(1))
+	checkStringLiteral(t, exp.Expressions[1], "two")
+	checkIdentifierExpression(t, exp.Expressions[2], "three")
+}
+
+func TestArrayPrecedence(t *testing.T) {
+	template := parseTest(t, `{{ [1 + 1, ("two" | size), 3 < 4] }}`)
+	checkStatementCount(t, template, 1)
+	stmt := getVariableStatement(t, template, 0)
+
+	exp, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("stmt is not an ArrayLiteral, got %T", stmt.Expression)
+	}
+
+	if len(exp.Expressions) != 3 {
+		t.Fatalf("Wrong number of expressions: got %d", len(exp.Expressions))
+	}
+
+	_, ok = exp.Expressions[0].(*ast.InfixExpression)
+	if !ok {
+		t.Fatalf("Element [0] is not an InfixExpression, got %T", exp.Expressions[0])
+	}
+
+	_, ok = exp.Expressions[1].(*ast.FilterExpression)
+	if !ok {
+		t.Fatalf("Element [1] is not an FilterExpression, got %T", exp.Expressions[1])
+	}
+
+	_, ok = exp.Expressions[2].(*ast.InfixExpression)
+	if !ok {
+		t.Fatalf("Element [2] is not an InfixExpression, got %T", exp.Expressions[2])
+	}
+}
 
 func TestFilters(t *testing.T) {
 	tests := []struct {
@@ -395,7 +444,7 @@ func checkBooleanLiteral(t *testing.T, exp ast.Expression, expected bool) {
 	}
 }
 
-func checkNumberExpression(t *testing.T, exp ast.Expression, expected float64) {
+func checkNumberLiteral(t *testing.T, exp ast.Expression, expected float64) {
 	number, ok := exp.(*ast.NumberLiteral)
 	if !ok {
 		t.Fatalf("Expression not NUMBER, got %T", exp)

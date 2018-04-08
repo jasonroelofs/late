@@ -2,6 +2,7 @@ package object
 
 import (
 	"strconv"
+	"strings"
 )
 
 const (
@@ -10,6 +11,7 @@ const (
 	OBJ_STRING = "STRING"
 	OBJ_BOOL   = "BOOLEAN"
 	OBJ_FILTER = "FILTER"
+	OBJ_ARRAY  = "ARRAY"
 )
 
 var (
@@ -62,3 +64,25 @@ type Filter struct {
 func (f *Filter) Type() ObjectType   { return OBJ_FILTER }
 func (f *Filter) Value() interface{} { return f.Name }
 func (f *Filter) Inspect() string    { return f.Name }
+
+type Array struct {
+	Elements []Object
+}
+
+func (a *Array) Type() ObjectType   { return OBJ_ARRAY }
+func (a *Array) Value() interface{} { return nil } // TODO What to return here?
+func (a *Array) Inspect() string {
+	output := strings.Builder{}
+
+	var parts []string
+
+	for _, expr := range a.Elements {
+		parts = append(parts, expr.Inspect())
+	}
+
+	output.WriteString("[")
+	output.WriteString(strings.Join(parts, ","))
+	output.WriteString("]")
+
+	return output.String()
+}

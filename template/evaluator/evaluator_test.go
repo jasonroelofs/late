@@ -82,6 +82,56 @@ func TestStrings(t *testing.T) {
 	}
 }
 
+type ExpectedElement struct {
+	objType object.ObjectType
+	value   interface{}
+}
+
+func TestArrays(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedLength int
+		expectedValues []ExpectedElement
+	}{
+		{`{{ [] }}`, 0, []ExpectedElement{}},
+		{`{{ [1,2,3] }}`, 3,
+			[]ExpectedElement{
+				{object.OBJ_NUMBER, float64(1)},
+				{object.OBJ_NUMBER, float64(2)},
+				{object.OBJ_NUMBER, float64(3)},
+			},
+		},
+		{`{{ ["two", 1 + 3] }}`, 2,
+			[]ExpectedElement{
+				{object.OBJ_STRING, "two"},
+				{object.OBJ_NUMBER, float64(4)},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		results := evalInput(t, test.input, context.New())
+
+		checkStatementCount(t, results, 1)
+
+		obj := results[0]
+		if obj.Type() != object.OBJ_ARRAY {
+			t.Fatalf("Did not get an array. Got %T", obj)
+		}
+
+		array := obj.(*object.Array)
+		if len(array.Elements) != test.expectedLength {
+			t.Fatalf("Wrong number of array elements. Expected %d got %d",
+				test.expectedLength, len(array.Elements),
+			)
+		}
+
+		for i, expValue := range test.expectedValues {
+			checkObject(t, array.Elements[i], expValue.objType, expValue.value)
+		}
+	}
+}
+
 func TestFilters(t *testing.T) {
 	tests := []struct {
 		input        string

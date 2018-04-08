@@ -268,3 +268,25 @@ func (f *FilterLiteral) String() string {
 
 	return out.String()
 }
+
+type ArrayLiteral struct {
+	Token       token.Token
+	Expressions []Expression
+}
+
+func (a *ArrayLiteral) expressionNode() {}
+func (a *ArrayLiteral) String() string {
+	output := strings.Builder{}
+	output.WriteString("[")
+
+	var parts []string
+
+	for _, expr := range a.Expressions {
+		parts = append(parts, expr.String())
+	}
+
+	output.WriteString(strings.Join(parts, ","))
+	output.WriteString("]")
+
+	return output.String()
+}

@@ -67,6 +67,7 @@ func New(lexer *lexer.Lexer) *Parser {
 	p.registerPrefix(token.TRUE, p.parseBooleanLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.FALSE, p.parseBooleanLiteral)
+	p.registerPrefix(token.LSQUARE, p.parseArrayLiteral)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
@@ -447,6 +448,35 @@ func (p *Parser) parseBooleanLiteral() ast.Expression {
 
 func (p *Parser) parseStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.currToken, Value: p.currToken.Literal}
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.currToken}
+
+	// Empty Array test
+	if p.peekTokenIs(token.RSQUARE) {
+		p.nextToken()
+		return array
+	}
+
+	// First element
+	p.nextToken()
+	array.Expressions = append(array.Expressions, p.parseExpression(LOWEST))
+
+	// Rest of the elements
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		array.Expressions = append(array.Expressions, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(token.RSQUARE) {
+		return nil
+	}
+
+	p.nextToken()
+
+	return array
 }
 
 func (p *Parser) expectPeek(allowed ...token.TokenType) bool {

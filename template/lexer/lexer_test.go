@@ -23,6 +23,7 @@ func TestTokenizesInput(t *testing.T) {
 		{{ 1 < 2 > 3 <= 4 >= 5 * 6 + 7 - 8 / 9 == 0 != 10 }}
 		{{ true | false }}
 		{{ (1 + 2) }}{{ 3 }}
+		{{ [1, 2] }}
 		One more raw token`
 
 	// There's a lot going on here
@@ -96,8 +97,16 @@ func TestTokenizesInput(t *testing.T) {
 		{token.OPEN_VAR, "{{"},
 		{token.NUMBER, "3"},
 		{token.CLOSE_VAR, "}}"},
+		{token.RAW, "\n\t\t"},
+		{token.OPEN_VAR, "{{"}, // 65
+		{token.LSQUARE, "["},
+		{token.NUMBER, "1"},
+		{token.COMMA, ","},
+		{token.NUMBER, "2"},
+		{token.RSQUARE, "]"}, // 70
+		{token.CLOSE_VAR, "}}"},
 		{token.RAW, "\n\t\tOne more raw token"},
-		{token.EOF, ""}, // 65
+		{token.EOF, ""},
 	}
 
 	testTemplateGeneratesTokens(t, input, tests)

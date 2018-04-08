@@ -86,6 +86,9 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 	case *ast.FilterLiteral:
 		return e.evalFilterLiteral(node)
 
+	case *ast.ArrayLiteral:
+		return e.evalArrayLiteral(node)
+
 	default:
 		return object.NULL
 	}
@@ -196,6 +199,16 @@ func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
 	}
 
 	return filterFunc.Call(input, filterParams)
+}
+
+func (e *Evaluator) evalArrayLiteral(node *ast.ArrayLiteral) object.Object {
+	array := &object.Array{}
+
+	for _, expr := range node.Expressions {
+		array.Elements = append(array.Elements, e.eval(expr))
+	}
+
+	return array
 }
 
 func convertBoolean(value bool) object.Object {
