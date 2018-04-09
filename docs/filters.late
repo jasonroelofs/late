@@ -1,7 +1,6 @@
 Filters convert and manipulate data for eventual output.
 
->  {% assign value = "Testing" %}
->  {{ value | upcase }}
+>  {% assign value = "Testing" %}{{ value | upcase }}
 
 <  TESTING
 
