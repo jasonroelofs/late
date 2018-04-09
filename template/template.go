@@ -1,7 +1,6 @@
 package template
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/jasonroelofs/late/context"
@@ -12,6 +11,8 @@ import (
 
 type Template struct {
 	body string
+
+	Errors []string
 }
 
 func New(templateBody string) *Template {
@@ -27,12 +28,7 @@ func (t *Template) Render(context *context.Context) string {
 	ast := parser.Parse()
 
 	if len(parser.Errors) > 0 {
-		fmt.Println("There were errors parsing the document")
-
-		for _, msg := range parser.Errors {
-			fmt.Println(msg)
-		}
-
+		t.Errors = parser.Errors
 		// For now, just return the original document.
 		return t.body
 	}

@@ -32,25 +32,36 @@ func main() {
 		}
 	}
 
-	var errors []string
 	var testCase string
 	var expected string
+	success := true
 
 	for _, file := range lateFiles {
-		fmt.Printf("Rendering %s\n", file)
+		fmt.Printf("Rendering %s...", file)
 		testCase, expected = parseAndTestDocFile(file)
 		t := template.New(testCase)
 		ctx := context.New()
 		results := t.Render(ctx)
 
-		if expected != results {
+		if len(t.Errors) > 0 {
+			success = false
+			fmt.Printf("\x1b[31m𝙓\x1b[0m\n")
+			fmt.Println("Rendering had the following errors:")
+			for _, err := range t.Errors {
+				fmt.Printf("\t %s\n", err)
+			}
+
+			continue
+		}
+
+		if expected == results {
+			fmt.Printf("\x1b[32m✓\x1b[0m\n")
+		} else {
+			success = false
+			fmt.Printf("\x1b[31m𝙓\x1b[0m\n")
 			dmp := diffmatchpatch.New()
 			diffs := dmp.DiffMain(expected, results, false)
-			errors = append(
-				errors,
-				fmt.Sprintf("%s did not render as expected\n%s", file, dmp.DiffPrettyText(diffs)),
-			)
-			continue
+			fmt.Printf("Unexpected template result\n\n%s\n", dmp.DiffPrettyText(diffs))
 		}
 
 		// TODO
@@ -58,11 +69,10 @@ func main() {
 		// If not match, track as an error to output at the end
 	}
 
-	if len(errors) > 0 {
-		fmt.Println("There were errors rendering documentation")
-		for _, err := range errors {
-			fmt.Println(err)
-		}
+	if success {
+		os.Exit(0)
+	} else {
+		os.Exit(1)
 	}
 }
 
