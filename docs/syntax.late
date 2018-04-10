@@ -91,12 +91,12 @@ Do note that chaining multiple comparisons together will always evaluate from le
 <  false
 <  false
 
-For string and/or array comparisons, there is a special operator available, `contains`,
+(TODO: Filter? Builtin?) For string and/or array comparisons, there is a special operator available, `contains`,
 which will provides easy substring or array inclusion checks inside of conditionals.
 
->  {{ user.first_name contains 'First' }}
->  {{ user.last_name contains 'First' }}
->  {% if list includes "3" %}
+>  {{ user.first_name | contains: 'First' }}
+>  {{ user.last_name | contains: 'First' }}
+>  {% if list | contains: "3" %}
 >    I see the number 3!
 >  {% end %}
 

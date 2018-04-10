@@ -28,7 +28,7 @@ The available methods on this object are as follows:
 <  (3) C: I was standing right here ...
 <  (3) R: AAAAHHHH! *punches C in the face*
 
-Late also provides a few control statements for skipping to the next iteration ({% raw %}`{% continue %}{% end %}`) or exiting the loop altogether ({% raw %}`{% break %}`{% end %}).
+Late also provides a few control statements for skipping to the next iteration (`{{{ {% continue %} }}}`) or exiting the loop altogether (`{{{ {% break %} }}}`).
 
 [ Example incoming ]
 
