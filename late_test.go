@@ -26,7 +26,7 @@ func TestAddAndFindingFilters(t *testing.T) {
 
 	resultObj := method.Call(object.New("String"), make(filter.Parameters))
 
-	if resultObj.Type() != object.OBJ_NUMBER {
+	if resultObj.Type() != object.TYPE_NUMBER {
 		t.Fatalf("The resulting object is not a number, got %T", resultObj)
 	}
 

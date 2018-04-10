@@ -15,7 +15,7 @@ func TestRawStatements(t *testing.T) {
 	results := evalInput(t, input, context.New())
 
 	checkStatementCount(t, results, 1)
-	checkObject(t, results[0], object.OBJ_STRING, input)
+	checkObject(t, results[0], object.TYPE_STRING, input)
 }
 
 func TestNumbers(t *testing.T) {
@@ -36,7 +36,7 @@ func TestNumbers(t *testing.T) {
 		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 1)
-		checkObject(t, results[0], object.OBJ_NUMBER, test.expected)
+		checkObject(t, results[0], object.TYPE_NUMBER, test.expected)
 	}
 }
 
@@ -64,7 +64,7 @@ func TestBooleans(t *testing.T) {
 		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 1)
-		checkObject(t, results[0], object.OBJ_BOOL, test.expected)
+		checkObject(t, results[0], object.TYPE_BOOL, test.expected)
 	}
 }
 
@@ -83,7 +83,7 @@ func TestStrings(t *testing.T) {
 		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 1)
-		checkObject(t, results[0], object.OBJ_STRING, test.expected)
+		checkObject(t, results[0], object.TYPE_STRING, test.expected)
 	}
 }
 
@@ -101,15 +101,15 @@ func TestArrays(t *testing.T) {
 		{`{{ [] }}`, 0, []ExpectedElement{}},
 		{`{{ [1,2,3] }}`, 3,
 			[]ExpectedElement{
-				{object.OBJ_NUMBER, float64(1)},
-				{object.OBJ_NUMBER, float64(2)},
-				{object.OBJ_NUMBER, float64(3)},
+				{object.TYPE_NUMBER, float64(1)},
+				{object.TYPE_NUMBER, float64(2)},
+				{object.TYPE_NUMBER, float64(3)},
 			},
 		},
 		{`{{ ["two", 1 + 3] }}`, 2,
 			[]ExpectedElement{
-				{object.OBJ_STRING, "two"},
-				{object.OBJ_NUMBER, float64(4)},
+				{object.TYPE_STRING, "two"},
+				{object.TYPE_NUMBER, float64(4)},
 			},
 		},
 	}
@@ -120,7 +120,7 @@ func TestArrays(t *testing.T) {
 		checkStatementCount(t, results, 1)
 
 		obj := results[0]
-		if obj.Type() != object.OBJ_ARRAY {
+		if obj.Type() != object.TYPE_ARRAY {
 			t.Fatalf("Did not get an array. Got %T", obj)
 		}
 
@@ -143,14 +143,14 @@ func TestArrayAccess(t *testing.T) {
 		expectedType object.ObjectType
 		expected     interface{}
 	}{
-		{`{{ [][0] }}`, object.OBJ_NULL, nil},
-		{`{{ [][-1] }}`, object.OBJ_NULL, nil},
-		{`{{ [1, 2, 3][0] }}`, object.OBJ_NUMBER, float64(1)},
-		{`{{ [1, 2, 3][1] }}`, object.OBJ_NUMBER, float64(2)},
-		{`{{ [1, 2, 3][2] }}`, object.OBJ_NUMBER, float64(3)},
-		{`{{ [1, 2, 3][3] }}`, object.OBJ_NULL, nil},
-		{`{{ ["one", 2][0] }}`, object.OBJ_STRING, "one"},
-		{`{{ [1,2,5][ [1,2][1] ] }}`, object.OBJ_NUMBER, float64(5)},
+		{`{{ [][0] }}`, object.TYPE_NULL, nil},
+		{`{{ [][-1] }}`, object.TYPE_NULL, nil},
+		{`{{ [1, 2, 3][0] }}`, object.TYPE_NUMBER, float64(1)},
+		{`{{ [1, 2, 3][1] }}`, object.TYPE_NUMBER, float64(2)},
+		{`{{ [1, 2, 3][2] }}`, object.TYPE_NUMBER, float64(3)},
+		{`{{ [1, 2, 3][3] }}`, object.TYPE_NULL, nil},
+		{`{{ ["one", 2][0] }}`, object.TYPE_STRING, "one"},
+		{`{{ [1,2,5][ [1,2][1] ] }}`, object.TYPE_NUMBER, float64(5)},
 	}
 
 	for _, test := range tests {
@@ -167,11 +167,11 @@ func TestFilters(t *testing.T) {
 		expectedType object.ObjectType
 		expected     interface{}
 	}{
-		{`{{ "A String" | size }}`, object.OBJ_NUMBER, float64(8)},
-		{`{{ "A String" | upcase }}`, object.OBJ_STRING, "A STRING"},
-		{`{{ "Hello Mom" | replace: "Mom", with: "World" }}`, object.OBJ_STRING, "Hello World"},
-		{`{{ "Hello Mom" | replace: " Mom", with: "" | upcase }}`, object.OBJ_STRING, "HELLO"},
-		{`{{ "Hello Mom" | replace: "Mom", with: ("World" | upcase) }}`, object.OBJ_STRING, "Hello WORLD"},
+		{`{{ "A String" | size }}`, object.TYPE_NUMBER, float64(8)},
+		{`{{ "A String" | upcase }}`, object.TYPE_STRING, "A STRING"},
+		{`{{ "Hello Mom" | replace: "Mom", with: "World" }}`, object.TYPE_STRING, "Hello World"},
+		{`{{ "Hello Mom" | replace: " Mom", with: "" | upcase }}`, object.TYPE_STRING, "HELLO"},
+		{`{{ "Hello Mom" | replace: "Mom", with: ("World" | upcase) }}`, object.TYPE_STRING, "Hello WORLD"},
 		// TODO: Unknown filter
 		//   Strict: error out
 		//   Lax: treat as a pass-through no-op, trigger a warning
@@ -192,15 +192,15 @@ func TestVariables(t *testing.T) {
 		expectedType object.ObjectType
 		expected     interface{}
 	}{
-		{"{{ page }}", context.Assigns{"page": "home"}, object.OBJ_STRING, "home"},
-		{"{{ count }}", context.Assigns{"count": 10}, object.OBJ_NUMBER, float64(10)},
-		{"{{ unknown }}", context.Assigns{}, object.OBJ_NULL, nil},
+		{"{{ page }}", context.Assigns{"page": "home"}, object.TYPE_STRING, "home"},
+		{"{{ count }}", context.Assigns{"count": 10}, object.TYPE_NUMBER, float64(10)},
+		{"{{ unknown }}", context.Assigns{}, object.TYPE_NULL, nil},
 
 		// Test variable usage as filter parameters
 		{
 			"{{ page | replace: page, with: changeTo | upcase }}",
 			context.Assigns{"page": "home", "changeTo": "blog"},
-			object.OBJ_STRING,
+			object.TYPE_STRING,
 			"BLOG",
 		},
 
@@ -223,16 +223,16 @@ func TestTags(t *testing.T) {
 		expectedType object.ObjectType
 		expected     interface{}
 	}{
-		{`{% assign page = "home" %}{{ page }}`, object.OBJ_STRING, "home"},
-		{"{% assign count = 10 %}{{ count }}", object.OBJ_NUMBER, float64(10)},
-		{`{% assign page_size = "home" | size %}{{ page_size }}`, object.OBJ_NUMBER, float64(4)},
+		{`{% assign page = "home" %}{{ page }}`, object.TYPE_STRING, "home"},
+		{"{% assign count = 10 %}{{ count }}", object.TYPE_NUMBER, float64(10)},
+		{`{% assign page_size = "home" | size %}{{ page_size }}`, object.TYPE_NUMBER, float64(4)},
 	}
 
 	for _, test := range tests {
 		results := evalInput(t, test.input, context.New())
 
 		checkStatementCount(t, results, 2)
-		checkObject(t, results[0], object.OBJ_NULL, nil)
+		checkObject(t, results[0], object.TYPE_NULL, nil)
 		checkObject(t, results[1], test.expectedType, test.expected)
 	}
 }

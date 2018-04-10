@@ -123,7 +123,7 @@ func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
 
 func (e *Evaluator) evalInfix(operator string, left, right object.Object) object.Object {
 	switch {
-	case left.Type() == object.OBJ_NUMBER && right.Type() == object.OBJ_NUMBER:
+	case left.Type() == object.TYPE_NUMBER && right.Type() == object.TYPE_NUMBER:
 		return e.evalNumberOperation(operator, left, right)
 	case operator == "==":
 		return convertBoolean(left.Value() == right.Value())
@@ -166,7 +166,7 @@ func (e *Evaluator) evalNumberOperation(operator string, left, right object.Obje
 
 func (e *Evaluator) evalPrefix(operator string, right object.Object) object.Object {
 	switch {
-	case right.Type() == object.OBJ_NUMBER:
+	case right.Type() == object.TYPE_NUMBER:
 		return e.evalNumberPrefix(operator, right)
 	default:
 		return object.NULL
@@ -214,7 +214,7 @@ func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
 
 func (e *Evaluator) evalIndex(left, index object.Object) object.Object {
 	switch {
-	case left.Type() == object.OBJ_ARRAY && index.Type() == object.OBJ_NUMBER:
+	case left.Type() == object.TYPE_ARRAY && index.Type() == object.TYPE_NUMBER:
 		return e.evalArrayIndex(left, index)
 	default:
 		// Unknown action "index" on this object

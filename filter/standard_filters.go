@@ -8,7 +8,7 @@ import (
 
 func Size(input object.Object, _ Parameters) object.Object {
 	switch input.Type() {
-	case object.OBJ_STRING:
+	case object.TYPE_STRING:
 		return object.New(len(input.Value().(string)))
 	default:
 		return input

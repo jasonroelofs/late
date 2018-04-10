@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	OBJ_NULL   = "NULL"
-	OBJ_NUMBER = "NUMBER"
-	OBJ_STRING = "STRING"
-	OBJ_BOOL   = "BOOLEAN"
-	OBJ_FILTER = "FILTER"
-	OBJ_ARRAY  = "ARRAY"
+	TYPE_NULL   = "NULL"
+	TYPE_NUMBER = "NUMBER"
+	TYPE_STRING = "STRING"
+	TYPE_BOOL   = "BOOLEAN"
+	TYPE_FILTER = "FILTER"
+	TYPE_ARRAY  = "ARRAY"
 )
 
 var (
@@ -22,7 +22,7 @@ var (
 
 type Null struct{}
 
-func (n *Null) Type() ObjectType   { return OBJ_NULL }
+func (n *Null) Type() ObjectType   { return TYPE_NULL }
 func (n *Null) Value() interface{} { return nil }
 func (n *Null) Inspect() string    { return "" }
 
@@ -30,7 +30,7 @@ type Number struct {
 	value float64
 }
 
-func (n *Number) Type() ObjectType   { return OBJ_NUMBER }
+func (n *Number) Type() ObjectType   { return TYPE_NUMBER }
 func (n *Number) Value() interface{} { return n.value }
 func (n *Number) Inspect() string    { return strconv.FormatFloat(n.value, 'f', -1, 64) }
 
@@ -38,7 +38,7 @@ type String struct {
 	value string
 }
 
-func (s *String) Type() ObjectType   { return OBJ_STRING }
+func (s *String) Type() ObjectType   { return TYPE_STRING }
 func (s *String) Value() interface{} { return s.value }
 func (s *String) Inspect() string    { return s.value }
 
@@ -46,7 +46,7 @@ type Boolean struct {
 	value bool
 }
 
-func (b *Boolean) Type() ObjectType   { return OBJ_BOOL }
+func (b *Boolean) Type() ObjectType   { return TYPE_BOOL }
 func (b *Boolean) Value() interface{} { return b.value }
 func (b *Boolean) Inspect() string {
 	if b.value {
@@ -61,7 +61,7 @@ type Filter struct {
 	Parameters map[string]Object
 }
 
-func (f *Filter) Type() ObjectType   { return OBJ_FILTER }
+func (f *Filter) Type() ObjectType   { return TYPE_FILTER }
 func (f *Filter) Value() interface{} { return f.Name }
 func (f *Filter) Inspect() string    { return f.Name }
 
@@ -69,7 +69,7 @@ type Array struct {
 	Elements []Object
 }
 
-func (a *Array) Type() ObjectType   { return OBJ_ARRAY }
+func (a *Array) Type() ObjectType   { return TYPE_ARRAY }
 func (a *Array) Value() interface{} { return nil } // TODO What to return here?
 func (a *Array) Inspect() string {
 	output := strings.Builder{}
