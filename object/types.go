@@ -12,6 +12,7 @@ const (
 	TYPE_BOOL   = "BOOLEAN"
 	TYPE_FILTER = "FILTER"
 	TYPE_ARRAY  = "ARRAY"
+	TYPE_HASH   = "HASH"
 )
 
 var (
@@ -85,4 +86,39 @@ func (a *Array) Inspect() string {
 	output.WriteString("]")
 
 	return output.String()
+}
+
+type Hash struct {
+	// Elements is keyed off an interface{} type to work around
+	// Go's strict map-key-semantics. We can't make
+	// object.String("one") == object.String("two") so to make our
+	// hash work, we drop down to the underlyng Value() as the key.
+	// This also means you shouldn't try to make a Hash or Array a key of another
+	// Hash, but why would you want to do such a thing anyway?
+	elements map[interface{}]Object
+}
+
+func NewHash() *Hash {
+	return &Hash{
+		elements: make(map[interface{}]Object),
+	}
+}
+
+func (h *Hash) Get(key Object) Object {
+	value, ok := h.elements[key.Value()]
+	if !ok {
+		return NULL
+	}
+
+	return value
+}
+
+func (h *Hash) Set(key Object, value Object) {
+	h.elements[key.Value()] = value
+}
+
+func (h *Hash) Type() ObjectType   { return TYPE_HASH }
+func (h *Hash) Value() interface{} { return nil } // TODO?
+func (h *Hash) Inspect() string {
+	return "TODO"
 }

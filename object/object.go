@@ -1,6 +1,9 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 type ObjectType string
 
@@ -24,13 +27,18 @@ func New(input interface{}) Object {
 	case bool:
 		return &Boolean{value: input}
 	default:
-		fmt.Printf(
-			"BUG: object.New() does not know how to convert variables of type %T.\n"+
-				"\tPlease open a ticket with this message and if possible the code that "+
-				"triggered this message.\n",
-			input,
-		)
-		return NULL
+		obj := tryReflection(input)
+
+		if obj == NULL {
+			fmt.Printf(
+				"BUG: object.New() does not know how to convert variables of type %T.\n"+
+					"\tPlease open a ticket with this message and if possible the code that "+
+					"triggered this message.\n",
+				input,
+			)
+		}
+
+		return obj
 	}
 }
 
@@ -63,4 +71,29 @@ func convertToNative(input interface{}) interface{} {
 	default:
 		return input
 	}
+}
+
+func tryReflection(input interface{}) Object {
+	v := reflect.ValueOf(input)
+
+	if v.Kind() == reflect.Map {
+		return convertFromMap(v)
+	}
+
+	return NULL
+}
+
+func convertFromMap(input reflect.Value) Object {
+	hash := NewHash()
+	var keyObj Object
+	var valueObj Object
+
+	for _, key := range input.MapKeys() {
+		keyObj = New(key.Interface())
+		valueObj = New(input.MapIndex(key).Interface())
+
+		hash.Set(keyObj, valueObj)
+	}
+
+	return hash
 }
