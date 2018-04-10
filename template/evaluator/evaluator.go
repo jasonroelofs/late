@@ -126,7 +126,9 @@ func (e *Evaluator) evalInfix(operator string, left, right object.Object) object
 	case left.Type() == object.OBJ_NUMBER && right.Type() == object.OBJ_NUMBER:
 		return e.evalNumberOperation(operator, left, right)
 	case operator == "==":
-		return convertBoolean(left == right)
+		return convertBoolean(left.Value() == right.Value())
+	case operator == "!=":
+		return convertBoolean(left.Value() != right.Value())
 	default:
 		return object.NULL
 	}
@@ -153,6 +155,10 @@ func (e *Evaluator) evalNumberOperation(operator string, left, right object.Obje
 		return convertBoolean(leftVal >= rightVal)
 	case "<=":
 		return convertBoolean(leftVal <= rightVal)
+	case "==":
+		return convertBoolean(leftVal == rightVal)
+	case "!=":
+		return convertBoolean(leftVal != rightVal)
 	default:
 		return object.NULL
 	}

@@ -53,6 +53,11 @@ func TestBooleans(t *testing.T) {
 		{"{{ 2 > 5 }}", false},
 		{"{{ 3 <= 3 }}", true},
 		{"{{ 4 >= 5 }}", false},
+		{"{{ 1 == 1 }}", true},
+		{"{{ 1 != 1 }}", false},
+		{`{{ "this" == "this" }}`, true},
+		{`{{ "this" != "that" }}`, true},
+		{`{{ "this" == "that" }}`, false},
 	}
 
 	for _, test := range tests {
