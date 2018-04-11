@@ -18,6 +18,7 @@ func TestNew(t *testing.T) {
 func TestRender(t *testing.T) {
 	tpl := New("This is a template")
 	results := tpl.Render(context.New())
+	checkNoErrors(t, tpl)
 
 	if results != "This is a template" {
 		t.Errorf("Failed to render the template")
@@ -39,6 +40,7 @@ func TestRenderLiquidWithLiterals(t *testing.T) {
 	for _, test := range tests {
 		tpl := New(test.liquidInput)
 		results := tpl.Render(context.New())
+		checkNoErrors(t, tpl)
 
 		if results != test.expectedOutput {
 			t.Errorf("Failed to render the template. Expected '%s' got '%s'", test.expectedOutput, results)
@@ -61,10 +63,26 @@ func TestRenderWithInitialState(t *testing.T) {
 		ctx.Assign(test.assigns)
 
 		results := tpl.Render(ctx)
+		checkNoErrors(t, tpl)
 
 		if results != test.expected {
 			t.Errorf("Failed to render. Expected '%s' got '%s'", test.expected, results)
 		}
+	}
+}
+
+func TestRenderWithComplexObject(t *testing.T) {
+	input := "{{ site.root.title }}"
+
+	tpl := New(input)
+	ctx := context.New()
+	ctx.Set("site", map[string]interface{}{"root": map[string]interface{}{"title": "Site Title"}})
+
+	results := tpl.Render(ctx)
+	checkNoErrors(t, tpl)
+
+	if results != "Site Title" {
+		t.Errorf("Failed to render. Expected got '%s'", results)
 	}
 }
 
@@ -87,6 +105,7 @@ func TestRender_RawAndComments(t *testing.T) {
 	for i, test := range tests {
 		tpl := New(test.input)
 		results := tpl.Render(context.New())
+		checkNoErrors(t, tpl)
 
 		if results != test.expected {
 			t.Errorf("(%d) Failed to render. Expected '%s' got '%s'", i, test.expected, results)
@@ -122,11 +141,18 @@ func TestRender_Tags(t *testing.T) {
 	for i, test := range tests {
 		tpl := New(test.input)
 		results := tpl.Render(context.New())
+		checkNoErrors(t, tpl)
 
 		trimmed := replacer.Replace(results)
 
 		if trimmed != test.expected {
 			t.Errorf("(%d) Failed to render. Expected '%s' got '%s'", i, test.expected, trimmed)
 		}
+	}
+}
+
+func checkNoErrors(t *testing.T, tpl *Template) {
+	if len(tpl.Errors) != 0 {
+		t.Fatalf("Errors rendering the template:\n%s", strings.Join(tpl.Errors, "\n"))
 	}
 }

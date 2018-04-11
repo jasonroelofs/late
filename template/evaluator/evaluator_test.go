@@ -161,6 +161,23 @@ func TestArrayAccess(t *testing.T) {
 	}
 }
 
+func TestHashAccess(t *testing.T) {
+	tests := []string{
+		`{{ site.root.title }}`,
+		`{{ site["root"]["title"] }}`,
+	}
+
+	ctx := context.New()
+	ctx.Set("site", map[string]interface{}{"root": map[string]interface{}{"title": "Site Title"}})
+
+	for _, test := range tests {
+		results := evalInput(t, test, ctx)
+
+		checkStatementCount(t, results, 1)
+		checkObject(t, results[0], object.TYPE_STRING, "Site Title")
+	}
+}
+
 func TestFilters(t *testing.T) {
 	tests := []struct {
 		input        string

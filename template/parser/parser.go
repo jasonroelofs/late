@@ -40,6 +40,7 @@ var precedences = map[token.TokenType]int{
 	token.SLASH:   PRODUCT,
 	token.TIMES:   PRODUCT,
 	token.LSQUARE: INDEX,
+	token.DOT:     INDEX,
 }
 
 type (
@@ -85,6 +86,7 @@ func New(lexer *lexer.Lexer) *Parser {
 	p.registerInfix(token.TIMES, p.parseInfixExpression)
 	p.registerInfix(token.PIPE, p.parseFilterExpression)
 	p.registerInfix(token.LSQUARE, p.parseIndexExpression)
+	p.registerInfix(token.DOT, p.parseDotExpression)
 
 	// Read the first two tokens to pre-fill
 	// curr and peek token values
@@ -412,6 +414,24 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	}
 
 	p.nextToken()
+	return expr
+}
+
+func (p *Parser) parseDotExpression(left ast.Expression) ast.Expression {
+	expr := &ast.IndexExpression{
+		Token: p.currToken,
+		Left:  left,
+	}
+
+	p.nextToken()
+	// Dot access is syntax sugar for square bracket access,
+	// so while this looks like an identifier, we hack it into a String
+	// and evaluate it as an index access instead.
+	//
+	//   this.that.those == this["that"]["those"]
+	//
+	expr.Index = p.parseStringLiteral()
+
 	return expr
 }
 

@@ -215,14 +215,16 @@ func (e *Evaluator) evalFilter(input, filter object.Object) object.Object {
 func (e *Evaluator) evalIndex(left, index object.Object) object.Object {
 	switch {
 	case left.Type() == object.TYPE_ARRAY && index.Type() == object.TYPE_NUMBER:
-		return e.evalArrayIndex(left, index)
+		return e.evalArrayAccess(left, index)
+	case left.Type() == object.TYPE_HASH:
+		return e.evalHashAccess(left, index)
 	default:
 		// Unknown action "index" on this object
 		return object.NULL
 	}
 }
 
-func (e *Evaluator) evalArrayIndex(left, index object.Object) object.Object {
+func (e *Evaluator) evalArrayAccess(left, index object.Object) object.Object {
 	array := left.(*object.Array)
 	idx := int(index.Value().(float64))
 
@@ -231,6 +233,12 @@ func (e *Evaluator) evalArrayIndex(left, index object.Object) object.Object {
 	}
 
 	return array.Elements[idx]
+}
+
+func (e *Evaluator) evalHashAccess(left, index object.Object) object.Object {
+	hash := left.(*object.Hash)
+
+	return hash.Get(index)
 }
 
 func (e *Evaluator) evalArrayLiteral(node *ast.ArrayLiteral) object.Object {

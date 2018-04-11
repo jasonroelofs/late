@@ -142,7 +142,7 @@ func TestPrefixExpressions(t *testing.T) {
 	}
 }
 
-func TestInfixExpressions(t *testing.T) {
+func TestNumberInfixExpressions(t *testing.T) {
 	tests := []struct {
 		input      string
 		leftValue  float64
@@ -277,6 +277,53 @@ func TestIndexAccess(t *testing.T) {
 
 	checkIdentifierExpression(t, exp.Left, "list")
 	checkNumberLiteral(t, exp.Index, 1)
+}
+
+func TestDotAccess(t *testing.T) {
+	template := parseTest(t, `{{ obj.method }}`)
+	checkStatementCount(t, template, 1)
+	stmt := getVariableStatement(t, template, 0)
+
+	exp, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("stmt is not an IndexExpression, got %T", stmt.Expression)
+	}
+
+	checkIdentifierExpression(t, exp.Left, "obj")
+	checkStringLiteral(t, exp.Index, "method")
+}
+
+func TestMultipleDotAccess(t *testing.T) {
+	template := parseTest(t, `{{ obj.method.deeper.value }}`)
+	checkStatementCount(t, template, 1)
+	stmt := getVariableStatement(t, template, 0)
+
+	exp, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("stmt is not an IndexExpression, got %T", stmt.Expression)
+	}
+
+	// This needs to end up as a reverse tree because it needs to be
+	// evalulated from left to right, e.g. (((obj.method).deeper).value).
+	// Thus the tree should start with Left being a new tree and Index being "value"
+	// and working back up from there.
+
+	checkStringLiteral(t, exp.Index, "value")
+
+	deeper, ok := exp.Left.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("First step up is not an index expression, got %T", deeper.Left)
+	}
+
+	checkStringLiteral(t, deeper.Index, "deeper")
+
+	method, ok := deeper.Left.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("First step up is not an index expression, got %T", deeper.Left)
+	}
+
+	checkIdentifierExpression(t, method.Left, "obj")
+	checkStringLiteral(t, method.Index, "method")
 }
 
 func TestFilters(t *testing.T) {
