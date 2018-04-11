@@ -165,10 +165,13 @@ func TestHashAccess(t *testing.T) {
 	tests := []string{
 		`{{ site.root.title }}`,
 		`{{ site["root"]["title"] }}`,
+		`{{ site[l1][l2] }}`,
 	}
 
 	ctx := context.New()
 	ctx.Set("site", map[string]interface{}{"root": map[string]interface{}{"title": "Site Title"}})
+	ctx.Set("l1", "root")
+	ctx.Set("l2", "title")
 
 	for _, test := range tests {
 		results := evalInput(t, test, ctx)
