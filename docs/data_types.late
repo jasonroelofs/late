@@ -51,6 +51,23 @@ Array. A contiguous list of values of any supported data type. Any given array c
 <
 <  Lists have 0-based indexing. The third element is 3.
 
+Hash. A set of key/value pairs that can be infinitely nested. The key and value can be any other Late data type.
+Hash data can be accessed via dot (`.`) notation or square bracket (`[]`) notation. If using dot notation, the
+names must be valid identifiers. Square brackets can use strings containing any content.
+
+> {% assign hash = {"user": {"first_name": "Rod", "last_name": "Boyson"}} %}
+> My name is {{ user.first_name }} {{ user["last_name"] }}.
+
+< My name is Rod Boyson.
+
+Similarly, any data provided to the template as global data is treated as a hash and accessed as such in the template.
+
+> The number {{ bus.number }} bus on the {{ road.name }} road.
+> My favorite food is {{ my["Favorite Food"] }}.
+
+< The number 29 bus on the Garboldisham road.
+< My favorite food is Strawberries and Cream.
+
 Nil. This value is used when there is nothing at a given variable or requested object location.
 
 >  {% assign nothing = null %}
