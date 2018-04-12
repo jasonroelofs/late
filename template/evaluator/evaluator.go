@@ -112,7 +112,7 @@ func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
 	}
 
 	var blockStmts []tag.Statement
-	if node.Tag.Block() {
+	if node.BlockStatement != nil {
 		for _, stmt := range node.BlockStatement.Statements {
 			blockStmts = append(blockStmts, stmt.(tag.Statement))
 		}

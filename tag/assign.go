@@ -16,13 +16,10 @@ import (
 type Assign struct {
 }
 
-func (a *Assign) Block() bool {
-	return false
-}
-
 func (a *Assign) Parse() *ParseConfig {
 	return &ParseConfig{
-		Rules: []ParseRule{Identifier(), Token(token.ASSIGN), Expression()},
+		TagName: "assign",
+		Rules:   []ParseRule{Identifier(), Token(token.ASSIGN), Expression()},
 	}
 }
 

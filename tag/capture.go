@@ -20,13 +20,11 @@ import (
 type Capture struct {
 }
 
-func (c *Capture) Block() bool {
-	return true
-}
-
 func (c *Capture) Parse() *ParseConfig {
 	return &ParseConfig{
-		Rules: []ParseRule{Identifier()},
+		TagName: "capture",
+		Block:   true,
+		Rules:   []ParseRule{Identifier()},
 	}
 }
 

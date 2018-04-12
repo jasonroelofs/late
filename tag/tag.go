@@ -11,7 +11,6 @@ import (
 // that close with a matching {% end %}
 
 type Tag interface {
-	Block() bool
 	Parse() *ParseConfig
 	Eval(Environment, *ParseResult) object.Object
 }

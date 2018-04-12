@@ -10,6 +10,13 @@ import (
  * to properly handle the current tag.
  */
 type ParseConfig struct {
+	// TagName must contain the string name of the tag.
+	TagName string
+
+	// Block must be set to true if this tag expects to take a block of code
+	// that ends with an {% end %}
+	Block bool
+
 	// Rules contains a list of rules informing the parser how to parse
 	// the rest of the immediate tag. The rules will be mapped into object.Object records
 	// and passed into Eval() during the evaluation phase.

@@ -255,7 +255,7 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 	// Move to our %} token so we can continue
 	p.nextToken()
 
-	if stmt.Tag.Block() {
+	if rules.Block {
 		stmt.BlockStatement = p.parseBlockStatement()
 
 		if p.currToken.Type != token.END {

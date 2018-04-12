@@ -18,8 +18,11 @@ func FindFilter(name string) *filter.Filter {
 	return filters[name]
 }
 
-func AddTag(name string, tag tagFactoryFunc) {
-	tags[name] = tag
+func AddTag(tag tagFactoryFunc) {
+	newTag := tag()
+	tagRules := newTag.Parse()
+
+	tags[tagRules.TagName] = tag
 }
 
 func FindTag(name string) tag.Tag {
@@ -39,6 +42,7 @@ func init() {
 	AddFilter("upcase", filter.Upcase)
 	AddFilter("replace", filter.Replace)
 
-	AddTag("assign", func() tag.Tag { return new(tag.Assign) })
-	AddTag("capture", func() tag.Tag { return new(tag.Capture) })
+	AddTag(func() tag.Tag { return new(tag.Assign) })
+	AddTag(func() tag.Tag { return new(tag.Capture) })
+	AddTag(func() tag.Tag { return new(tag.If) })
 }
