@@ -73,3 +73,24 @@ func TestNewReturnsObjectsRaw(t *testing.T) {
 		t.Errorf("Did not properly copy the object. Got %#v", copy)
 	}
 }
+
+func TestTruthy(t *testing.T) {
+	tests := []struct {
+		input    Object
+		expected bool
+	}{
+		{TRUE, true},
+		{New("String"), true},
+		{New(12345), true},
+		{&Array{}, true},
+		{&Hash{}, true},
+		{FALSE, false},
+		{NULL, false},
+	}
+
+	for _, test := range tests {
+		if Truthy(test.input) != test.expected {
+			t.Errorf("Truthy test failed for %v, expected %t", test.input, test.expected)
+		}
+	}
+}

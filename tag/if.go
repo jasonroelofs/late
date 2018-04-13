@@ -9,8 +9,7 @@ import (
 /**
  * The veritable `if` tag!
  */
-type If struct {
-}
+type If struct{}
 
 func (i *If) Parse() *ParseConfig {
 	return &ParseConfig{
@@ -32,13 +31,11 @@ func (i *If) Parse() *ParseConfig {
 }
 
 func (i *If) Eval(env Environment, results *ParseResult) object.Object {
-	initialValue := results.Nodes[0] == object.TRUE
-
-	if initialValue {
+	if object.Truthy(results.Nodes[0]) {
 		return i.evalStatements(env, results.Statements)
 	} else {
 		for _, subTag := range results.SubTagResults {
-			if (subTag.TagName == "elsif" && subTag.Nodes[0] == object.TRUE) ||
+			if (subTag.TagName == "elsif" && object.Truthy(subTag.Nodes[0])) ||
 				subTag.TagName == "else" {
 				return i.evalStatements(env, subTag.Statements)
 			}

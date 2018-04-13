@@ -13,6 +13,10 @@ type Object interface {
 	Inspect() string
 }
 
+func Truthy(input Object) bool {
+	return input != FALSE && input != NULL
+}
+
 func New(input interface{}) Object {
 	asObj, ok := input.(Object)
 	if ok {
