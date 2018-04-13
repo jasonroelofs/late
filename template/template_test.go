@@ -132,6 +132,22 @@ func TestRender_Tags(t *testing.T) {
 			{{ outer }}`,
 			"1 + 2 == 3",
 		},
+
+		{`{% if true %}True{% end %}`, "True"},
+		{`{% if false %}True{% end %}`, ""},
+		{`{% if false %}True{% else %}False{% end %}`, "False"},
+		{`{% assign num = 7 %}
+			{% if num > 10 %}
+				Big
+			{% elsif num > 7 %}
+				Big-ish
+			{% elsif num > 5 %}
+				Medium
+			{% else %}
+				Small
+			{% end %}`,
+			"Medium",
+		},
 	}
 
 	// TODO: Build a set of rules around whitespace management.

@@ -55,10 +55,10 @@ Hash. A set of key/value pairs that can be infinitely nested. The key and value 
 Hash data can be accessed via dot (`.`) notation or square bracket (`[]`) notation. If using dot notation, the
 names must be valid identifiers. Square brackets can use strings containing any content.
 
-> {% assign hash = {"user": {"first_name": "Rod", "last_name": "Boyson"}} %}
+> {% assign hash = {"user": {"first_name": "Rhodes", "last_name": "Boyson"}} %}
 > My name is {{ user.first_name }} {{ user["last_name"] }}.
 
-< My name is Rod Boyson.
+< My name is Rhodes Boyson.
 
 Similarly, any data provided to the template as global data is treated as a hash and accessed as such in the template.
 

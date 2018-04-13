@@ -100,6 +100,10 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 }
 
 func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
+	return node.Tag.Eval(e, e.prepareTagResults(node))
+}
+
+func (e *Evaluator) prepareTagResults(node *ast.TagStatement) *tag.ParseResult {
 	var results []object.Object
 
 	for _, node := range node.Nodes {
@@ -111,14 +115,25 @@ func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
 		}
 	}
 
-	var blockStmts []tag.Statement
+	parseResults := &tag.ParseResult{
+		TagName: node.TagName,
+		Nodes:   results,
+	}
+
 	if node.BlockStatement != nil {
 		for _, stmt := range node.BlockStatement.Statements {
-			blockStmts = append(blockStmts, stmt.(tag.Statement))
+			parseResults.Statements = append(parseResults.Statements, stmt.(tag.Statement))
+		}
+
+		for _, subTag := range node.SubTags {
+			parseResults.SubTagResults = append(
+				parseResults.SubTagResults,
+				e.prepareTagResults(subTag),
+			)
 		}
 	}
 
-	return node.Tag.Eval(e, &tag.ParseResult{Nodes: results, Statements: blockStmts})
+	return parseResults
 }
 
 func (e *Evaluator) evalInfix(operator string, left, right object.Object) object.Object {

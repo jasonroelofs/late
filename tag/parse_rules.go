@@ -21,10 +21,18 @@ type ParseConfig struct {
 	// the rest of the immediate tag. The rules will be mapped into object.Object records
 	// and passed into Eval() during the evaluation phase.
 	Rules []ParseRule
+
+	// Block tags can also have sub-tags to provide for conditional execution (e.g. if/elsif/else).
+	// Provide the definitions of each subtag type here. The results of these subtags, when found,
+	// will be provided in the SubTagResults value of ParseResult.
+	SubTags []ParseConfig
 }
 
 // ParseResult is passed into the tags Eval() method during evaulation phase.
 type ParseResult struct {
+	// The name of the tag we're currently processing
+	TagName string
+
 	// Nodes is the list of object.Object records that map directly to whatever
 	// was provided in the ParseConfig.Rules field.
 	Nodes []object.Object
@@ -32,6 +40,10 @@ type ParseResult struct {
 	// For block-type tags, this list of statements correspond to the content of the
 	// block and should be evaulated in order according to the rules of the tag.
 	Statements []Statement
+
+	// For block tags that can have sub-tags (e.g. if, case), each found and valid
+	// subtag will have it's own set of ParseResults.
+	SubTagResults []*ParseResult
 }
 
 /**

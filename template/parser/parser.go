@@ -58,6 +58,11 @@ type Parser struct {
 	// Pratt Parsing!
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
+
+	// Keep track of a stack of Tags we're parsing, as they
+	// can be nested quite deeply and will often have SubTags that we need
+	// to associate with the correct parent Tag.
+	currentTagStack []*ast.TagStatement
 }
 
 func New(lexer *lexer.Lexer) *Parser {
@@ -109,6 +114,10 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
+func (p *Parser) currTokenIs(tokenType token.TokenType) bool {
+	return p.currToken.Type == tokenType
+}
+
 func (p *Parser) peekTokenIs(tokenTypes ...token.TokenType) bool {
 	for _, tt := range tokenTypes {
 		if p.peekToken.Type == tt {
@@ -122,7 +131,7 @@ func (p *Parser) peekTokenIs(tokenTypes ...token.TokenType) bool {
 func (p *Parser) Parse() *ast.Template {
 	template := &ast.Template{}
 
-	for p.currToken.Type != token.EOF {
+	for !p.currTokenIs(token.EOF) {
 		stmt := p.parseNext()
 		if stmt != nil {
 			template.AddStatement(stmt)
@@ -174,7 +183,7 @@ func (p *Parser) parseVerbatimStatement() *ast.RawStatement {
 		return nil
 	}
 
-	// Skip past the ending }}}
+	// Move to the ending }}}
 	p.nextToken()
 
 	return stmt
@@ -201,24 +210,71 @@ func (p *Parser) parseVariableStatement() *ast.VariableStatement {
 }
 
 func (p *Parser) parseTagStatement() *ast.TagStatement {
-	stmt := &ast.TagStatement{Token: p.currToken}
 
 	// Move past the opening {%
 	p.nextToken()
 
-	// Store the first token as our name
-	// and find the tag object with that name.
-	stmt.TagName = p.currToken.Literal
-	stmt.Tag = late.FindTag(stmt.TagName)
+	var currentParseConfig *tag.ParseConfig
+	var inSubTag bool
+	currTagName := p.currToken.Literal
 
-	if stmt.Tag == nil {
+	stmt := p.currentTag()
+
+	// If there's no statement at all, start one
+	// If there's a statement, check that we're on a sub tag
+	// - If no matching subtag, try to start a new tag and push on the stack
+	// - If matching subtag, continue and store
+
+	if stmt == nil {
+		// Store the first token as our name
+		// and find the tag object with that name.
+		tagName := p.currToken.Literal
+		stmt = &ast.TagStatement{
+			Token:   p.currToken,
+			TagName: tagName,
+			Tag:     late.FindTag(tagName),
+		}
+
+		if stmt.Tag == nil {
+			p.parserErrorf("Unknown tag '%s'", stmt.TagName)
+			return nil
+		}
+
+		p.pushCurrentTag(stmt)
+		currentParseConfig = stmt.Tag.Parse()
+
+	} else if stmt.HasSubTag(currTagName) {
+		// We have a subtag!
+		inSubTag = true
+		subStmt := &ast.TagStatement{
+			Token:   p.currToken,
+			TagName: currTagName,
+			Owner:   stmt,
+		}
+
+		stmt.SubTags = append(stmt.SubTags, subStmt)
+		currentParseConfig = stmt.SubTagConfig(currTagName)
+
+		// From here on out, the subtag now behaves as a tag in its own right,
+		// but is not pushed onto the stack so further sub-tags can be applied.
+		stmt = subStmt
+	} else if nestedTag := late.FindTag(currTagName); nestedTag != nil {
+		// We actually are starting a new tag in the nested context of the current tag.
+		// Build our new tag statement and make it the current
+		stmt = &ast.TagStatement{
+			Token:   p.currToken,
+			TagName: currTagName,
+			Tag:     nestedTag,
+		}
+
+		p.pushCurrentTag(stmt)
+		currentParseConfig = stmt.Tag.Parse()
+	} else {
 		p.parserErrorf("Unknown tag '%s'", stmt.TagName)
 		return nil
 	}
 
-	rules := stmt.Tag.Parse()
-
-	for _, parseRule := range rules.Rules {
+	for _, parseRule := range currentParseConfig.Rules {
 		expectedTokenType := p.parseRuleToTokenType(parseRule)
 
 		if p.peekTokenIs(token.CLOSE_TAG) || p.peekTokenIs(token.EOF) {
@@ -228,7 +284,7 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 
 		p.nextToken()
 
-		if expectedTokenType != token.EXPRESSION && p.currToken.Type != expectedTokenType {
+		if expectedTokenType != token.EXPRESSION && !p.currTokenIs(expectedTokenType) {
 			p.parserErrorf("Error parsing tag '%s': expected %s found %s", stmt.TagName, expectedTokenType, p.currToken.Type)
 			break
 		}
@@ -255,15 +311,46 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 	// Move to our %} token so we can continue
 	p.nextToken()
 
-	if rules.Block {
+	if currentParseConfig.Block {
 		stmt.BlockStatement = p.parseBlockStatement()
+	}
 
-		if p.currToken.Type != token.END {
-			p.parserErrorf("Error parsing tag '%s': expected %s found %s", stmt.TagName, token.END, p.currToken.Type)
+	// Done with this tag, pop us on out, and make sure we move
+	// ourselves to the final END tag for block tags so the parser
+	// can continue it's work.
+	if !inSubTag {
+		p.popCurrentTag()
+
+		if currentParseConfig.Block {
+			if !p.peekTokenIs(token.END) {
+				p.parserErrorf("Error parsing tag '%s': expected %s found %s", stmt.TagName, token.END, p.peekToken.Type)
+				return nil
+			}
+
+			p.nextToken()
 		}
 	}
 
 	return stmt
+}
+
+func (p *Parser) pushCurrentTag(tagStmt *ast.TagStatement) {
+	p.currentTagStack = append(p.currentTagStack, tagStmt)
+}
+
+func (p *Parser) currentTag() *ast.TagStatement {
+	if len(p.currentTagStack) == 0 {
+		return nil
+	}
+
+	return p.currentTagStack[len(p.currentTagStack)-1]
+}
+
+func (p *Parser) popCurrentTag() *ast.TagStatement {
+	top := p.currentTag()
+	p.currentTagStack = p.currentTagStack[0 : len(p.currentTagStack)-1]
+
+	return top
 }
 
 func (p *Parser) parseRuleToTokenType(parseRule tag.ParseRule) token.TokenType {
@@ -283,16 +370,26 @@ func (p *Parser) parseRuleToTokenType(parseRule tag.ParseRule) token.TokenType {
 }
 
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
-	stmt := &ast.BlockStatement{}
+	block := &ast.BlockStatement{}
+	currTag := p.currentTag()
+	var nextStmt ast.Statement
 
 	for !p.peekTokenIs(token.END) && !p.peekTokenIs(token.EOF) {
 		p.nextToken()
-		stmt.Statements = append(stmt.Statements, p.parseNext())
+
+		nextStmt = p.parseNext()
+		// Due to the not-really-nested nature of block tags, we look for
+		// any tag statements generated here and if the tag is actually a sub-tag
+		// then we need to not include that tag in the block statements list of
+		// the parent block tag.
+		asTag, ok := nextStmt.(*ast.TagStatement)
+
+		if !ok || asTag.Owner != currTag {
+			block.Statements = append(block.Statements, nextStmt)
+		}
 	}
 
-	p.nextToken()
-
-	return stmt
+	return block
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {

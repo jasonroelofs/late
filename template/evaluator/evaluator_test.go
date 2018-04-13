@@ -1,6 +1,8 @@
 package evaluator
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/jasonroelofs/late/context"
@@ -246,14 +248,43 @@ func TestTags(t *testing.T) {
 		{`{% assign page = "home" %}{{ page }}`, object.TYPE_STRING, "home"},
 		{"{% assign count = 10 %}{{ count }}", object.TYPE_NUMBER, float64(10)},
 		{`{% assign page_size = "home" | size %}{{ page_size }}`, object.TYPE_NUMBER, float64(4)},
+
+		{`{% if true %}True{% end %}`, object.TYPE_STRING, "True"},
+		{`{% if false %}True{% else %}False{% end %}`, object.TYPE_STRING, "False"},
+		{`{% if 1 == 2 %}True{% elsif 2 == 3 %}False{% end %}`, object.TYPE_NULL, nil},
 	}
 
 	for _, test := range tests {
 		results := evalInput(t, test.input, context.New())
 
-		checkStatementCount(t, results, 2)
-		checkObject(t, results[0], object.TYPE_NULL, nil)
-		checkObject(t, results[1], test.expectedType, test.expected)
+		checkObject(t, results[len(results)-1], test.expectedType, test.expected)
+	}
+}
+
+func TestNestingBlockTags(t *testing.T) {
+	input := `
+		{% if true %}
+			{% capture nested %}
+				{% if false %}
+					I am false!
+				{% else %}
+					I am true!
+				{% end %}
+			{% end %}
+		{% end %}
+		{{ nested }}`
+
+	results := evalInput(t, input, context.New())
+
+	for i, r := range results {
+		fmt.Printf("(%d) %s", i, r.Inspect())
+	}
+
+	output := results[len(results)-1].Value().(string)
+	trimmed := strings.TrimSpace(output)
+
+	if trimmed != "I am true!" {
+		t.Fatalf("Wrong value of object. Expected %v Got %v", "I am true!", trimmed)
 	}
 }
 
@@ -282,7 +313,7 @@ func checkStatementCount(t *testing.T, results []object.Object, expected int) {
 
 func checkObject(t *testing.T, obj object.Object, objType object.ObjectType, expected interface{}) {
 	if obj.Type() != objType {
-		t.Fatalf("Wrong object type. Expected %s Got %T", objType, obj)
+		t.Fatalf("Wrong object type. Expected %s Got %T. Test: \"%v\"", objType, obj, expected)
 	}
 
 	if obj.Value() != expected {

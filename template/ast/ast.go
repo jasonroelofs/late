@@ -83,14 +83,43 @@ func (v *VariableStatement) String() string {
 }
 
 type TagStatement struct {
-	Token          token.Token
-	TagName        string
-	Tag            tag.Tag
+	Token token.Token
+
+	TagName string
+	Tag     tag.Tag
+	Owner   *TagStatement
+
 	Nodes          []Expression
 	BlockStatement *BlockStatement
+	SubTags        []*TagStatement
 }
 
 func (t *TagStatement) statementNode() {}
+
+func (t *TagStatement) HasSubTag(tagName string) bool {
+	rules := t.Tag.Parse()
+
+	for _, subTagConfig := range rules.SubTags {
+		if subTagConfig.TagName == tagName {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (t *TagStatement) SubTagConfig(tagName string) *tag.ParseConfig {
+	rules := t.Tag.Parse()
+
+	for _, subTagConfig := range rules.SubTags {
+		if subTagConfig.TagName == tagName {
+			return &subTagConfig
+		}
+	}
+
+	return &tag.ParseConfig{}
+}
+
 func (t *TagStatement) String() string {
 	out := strings.Builder{}
 
@@ -105,6 +134,8 @@ func (t *TagStatement) String() string {
 
 	if t.BlockStatement != nil {
 		out.WriteString(t.BlockStatement.String())
+
+		// TODO Subtag support here too
 
 		// We don't have an explicit parse node for the end, it's
 		// just a lexer token to explicitly add it back here.

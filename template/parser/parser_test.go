@@ -396,6 +396,8 @@ func TestTags(t *testing.T) {
 		numNodes int
 	}{
 		{`{% assign this = "that" %}`, "assign", 3},
+		{`{% capture variable %}{% end %}`, "capture", 1},
+		{`{% if true %}this{% end %}`, "if", 1},
 	}
 
 	for _, test := range tests {
@@ -415,6 +417,127 @@ func TestTags(t *testing.T) {
 		if len(stmt.Nodes) != test.numNodes {
 			t.Fatalf("Did not store the right number of ast nodes. Expected %d got %d", test.numNodes, len(stmt.Nodes))
 		}
+	}
+}
+
+func TestBasicIfTag(t *testing.T) {
+	input := "{% if true %}True{% end %}"
+
+	template := parseTest(t, input)
+	checkStatementCount(t, template, 1)
+
+	stmt := getTagStatement(t, template, 0)
+	if stmt.BlockStatement == nil {
+		t.Fatalf("If did not get a block statement")
+	}
+
+	if len(stmt.BlockStatement.Statements) != 1 {
+		t.Fatalf("Wrong number of statements in the block. Got %d", len(stmt.BlockStatement.Statements))
+	}
+
+	_, ok := stmt.BlockStatement.Statements[0].(*ast.RawStatement)
+	if !ok {
+		t.Fatalf("Stored the wrong kind of statement, got %T", stmt.BlockStatement.Statements[0])
+	}
+}
+
+func TestIfElseSubTags(t *testing.T) {
+	input := "{% if true %}True{% else %}False{% end %}"
+
+	template := parseTest(t, input)
+	checkStatementCount(t, template, 1)
+
+	stmt := getTagStatement(t, template, 0)
+	if len(stmt.SubTags) != 1 {
+		t.Fatalf("Did not get a sub-tag defined for the else clause")
+	}
+
+	subTag := stmt.SubTags[0]
+	if subTag.TagName != "else" {
+		t.Fatalf("Wrong tag name for sub tag, got %s", subTag.TagName)
+	}
+
+	if len(subTag.Nodes) != 0 {
+		t.Fatalf("Should not have had any nodes to parse, got %d nodes", len(subTag.Nodes))
+	}
+
+	subBlock := subTag.BlockStatement
+	if subBlock == nil {
+		t.Fatalf("Else clause did not get a block statement")
+	}
+
+	if len(subBlock.Statements) != 1 {
+		t.Fatalf("Wrong number of statements in the else block. Got %d", len(stmt.BlockStatement.Statements))
+	}
+
+	_, ok := subBlock.Statements[0].(*ast.RawStatement)
+	if !ok {
+		t.Fatalf("Stored the wrong kind of statement, got %T", subBlock.Statements[0])
+	}
+}
+
+func TestIfElseIfSubTags(t *testing.T) {
+	input := "{% if true %}True{% elsif false %}False{% else %}Nope{% end %}"
+
+	template := parseTest(t, input)
+	checkStatementCount(t, template, 1)
+
+	stmt := getTagStatement(t, template, 0)
+	if len(stmt.SubTags) != 2 {
+		t.Fatalf("Did not get sub-tags defined for the elsif or else clause")
+	}
+
+	// Elsif
+	subTag := stmt.SubTags[0]
+	if subTag.TagName != "elsif" {
+		t.Fatalf("Wrong tag name for sub tag, got %s", subTag.TagName)
+	}
+
+	if len(subTag.Nodes) != 1 {
+		t.Fatalf("Wrong number of nodes to parse, got %d", len(subTag.Nodes))
+	}
+
+	_, ok := subTag.Nodes[0].(*ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Did not correctly parse the elsif expression, got %v", subTag.Nodes[0])
+	}
+
+	subBlock := subTag.BlockStatement
+	if subBlock == nil {
+		t.Fatalf("Elsif clause did not get a block statement")
+	}
+
+	if len(subBlock.Statements) != 1 {
+		t.Fatalf("Wrong number of statements in the elsif block. Got %d", len(stmt.BlockStatement.Statements))
+	}
+
+	_, ok = subBlock.Statements[0].(*ast.RawStatement)
+	if !ok {
+		t.Fatalf("Stored the wrong kind of statement, got %T", subBlock.Statements[0])
+	}
+
+	// Else
+	subTag = stmt.SubTags[1]
+	if subTag.TagName != "else" {
+		t.Fatalf("Wrong tag name for sub tag, got %s", subTag.TagName)
+	}
+
+	if len(subTag.Nodes) != 0 {
+		t.Fatalf("Should not have had any nodes to parse, got %d nodes", len(subTag.Nodes))
+	}
+
+	subBlock = subTag.BlockStatement
+	if subBlock == nil {
+		t.Fatalf("Else clause did not get a block statement")
+	}
+
+	if len(subBlock.Statements) != 1 {
+		t.Fatalf("Wrong number of statements in the else block. Got %d", len(stmt.BlockStatement.Statements))
+	}
+
+	_, ok = subBlock.Statements[0].(*ast.RawStatement)
+	if !ok {
+		t.Fatalf("Stored the wrong kind of statement, got %T", subBlock.Statements[0])
 	}
 }
 
