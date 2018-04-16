@@ -70,6 +70,18 @@ type Array struct {
 	Elements []Object
 }
 
+func (a *Array) Append(obj Object) {
+	a.Elements = append(a.Elements, obj)
+}
+
+func (a *Array) Get(index int) Object {
+	return a.Elements[index]
+}
+
+func (a *Array) Len() int {
+	return len(a.Elements)
+}
+
 func (a *Array) Type() ObjectType   { return TYPE_ARRAY }
 func (a *Array) Value() interface{} { return nil } // TODO What to return here?
 func (a *Array) Inspect() string {

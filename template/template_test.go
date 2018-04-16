@@ -118,10 +118,12 @@ func TestRender_Tags(t *testing.T) {
 		input    string
 		expected string
 	}{
+		// 0
 		{`{% assign page = "home" %}{{ page }}`, "home"},
 		{`{% assign page = "home" | upcase %}{{ page }}`, "HOME"},
 		{`{% assign page = "Here" | replace: "Here", with: "There" %}{{ page }}`, "There"},
 
+		// 3
 		{`{% capture math %}1 + 2 == {{ 1 + 2 }}{% end %}{{ math }}`, "1 + 2 == 3"},
 		{`{% capture outer %}
 				{% capture inner %}
@@ -133,6 +135,7 @@ func TestRender_Tags(t *testing.T) {
 			"1 + 2 == 3",
 		},
 
+		// 5
 		{`{% if true %}True{% end %}`, "True"},
 		{`{% if false %}True{% end %}`, ""},
 		{`{% if false %}True{% else %}False{% end %}`, "False"},
@@ -147,6 +150,35 @@ func TestRender_Tags(t *testing.T) {
 				Small
 			{% end %}`,
 			"Medium",
+		},
+
+		// 9
+		{`{% for num in [1,2,3] %}{{ num }}{% end %}`, "123"},
+		{`{% for num in [1,2,3] %}
+				{% if num == 1 %}{% continue %}{% end %}
+				{{ num }}
+			{% end %}`,
+			"23",
+		},
+		{`{% for x in [1,2,3] %}
+				{% for y in [1,2,3] %}
+					{% if y == 3 %}{% break %}{% end %}
+					{{ x }},{{ y }}-
+				{% end %}
+			{% end %}`,
+			"1,1-1,2-2,1-2,2-3,1-3,2-",
+		},
+		{`{% for num in [1,2,3] %}
+				{{ num }}
+				{% if num == 2 %}{% break %}{% end %}
+			{% end %}`,
+			"12",
+		},
+		{`{% for num in [1,2,3] %}
+				{{ num }}
+				{% if num == 2 %}Break{% break %}It Up{% end %}
+			{% end %}`,
+			"12Break",
 		},
 	}
 

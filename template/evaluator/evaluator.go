@@ -1,6 +1,8 @@
 package evaluator
 
 import (
+	"strings"
+
 	"github.com/jasonroelofs/late"
 	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
@@ -11,6 +13,8 @@ import (
 type Evaluator struct {
 	context  *context.Context
 	template *ast.Template
+
+	currentInterrupt *ast.InterruptStatement
 }
 
 func New(template *ast.Template, context *context.Context) *Evaluator {
@@ -20,6 +24,7 @@ func New(template *ast.Template, context *context.Context) *Evaluator {
 	}
 }
 
+// TODO: Return an object.Array?
 func (e *Evaluator) Run() []object.Object {
 	var objects []object.Object
 
@@ -39,11 +44,44 @@ func (e *Evaluator) Get(variable string) object.Object {
 	return e.context.Get(variable)
 }
 
+func (e *Evaluator) Interrupt() string {
+	if e.currentInterrupt == nil {
+		return ""
+	}
+
+	return e.currentInterrupt.Name
+}
+
+func (e *Evaluator) ClearInterrupt() {
+	e.currentInterrupt = nil
+}
+
+func (e *Evaluator) EvalAll(statements []tag.Statement) object.Object {
+	out := strings.Builder{}
+
+	for _, stmt := range statements {
+		interrupt, isInterrupt := stmt.(*ast.InterruptStatement)
+
+		if isInterrupt {
+			e.currentInterrupt = interrupt
+			break
+		}
+
+		out.WriteString(e.Eval(stmt).Inspect())
+	}
+
+	return object.New(out.String())
+}
+
 func (e *Evaluator) Eval(node tag.Statement) object.Object {
 	return e.eval(node.(ast.Node))
 }
 
 func (e *Evaluator) eval(node ast.Node) object.Object {
+	if e.Interrupt() != "" {
+		return object.NULL
+	}
+
 	switch node := node.(type) {
 	// Top-level Statements
 	case *ast.RawStatement:

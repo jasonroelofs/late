@@ -17,8 +17,12 @@ type Tag interface {
 
 type Environment interface {
 	Eval(Statement) object.Object
+	EvalAll([]Statement) object.Object
 	Get(string) object.Object
 	Set(string, interface{})
+
+	Interrupt() string
+	ClearInterrupt()
 }
 
 type Statement interface {

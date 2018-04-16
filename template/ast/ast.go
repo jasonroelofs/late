@@ -145,6 +145,18 @@ func (t *TagStatement) String() string {
 	return out.String()
 }
 
+// Some tags can be Interrupts that will halt the current
+// block of code and return what's been evaluated up until that point.
+// For examples, see `continue` and `break`
+type InterruptStatement struct {
+	Token token.Token
+	Tag   tag.Tag
+	Name  string
+}
+
+func (i *InterruptStatement) statementNode() {}
+func (i *InterruptStatement) String() string { return "" }
+
 type BlockStatement struct {
 	Statements []Statement
 }

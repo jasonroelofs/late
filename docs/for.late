@@ -6,7 +6,7 @@ The available methods on this object are as follows:
 * forloop.last -- True if this is the last iteration
 * forloop.index -- The current iteration. This number starts at 0.
 
->  {% for run in (0..3) %}
+>  {% for run in [0, 1, 2, 3] %}
 >    ({{ forloop.index }}) C: I was standing right here ...
 >    {% if forloop.last %}
 >      ({{ forloop.index }}) R: AAAAHHHH! *punches C in the face*
@@ -30,6 +30,13 @@ The available methods on this object are as follows:
 
 Late also provides a few control statements for skipping to the next iteration (`{{{ {% continue %} }}}`) or exiting the loop altogether (`{{{ {% break %} }}}`).
 
-[ Example incoming ]
+>  {% for num in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] %}
+>    {% if num < 5 %} {% continue %} {% end %}
+>    {{ num }}
+>    {% if num >= 8 %} {% break %} {% end %}
+>  {% end %}
 
-
+<  5
+<  6
+<  7
+<  8

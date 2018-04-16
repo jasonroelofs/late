@@ -10,6 +10,16 @@ type TestEnv struct {
 	StatementsRan []Statement
 }
 
+func (t *TestEnv) EvalAll(stmts []Statement) object.Object {
+	results := &object.Array{}
+
+	for _, stmt := range stmts {
+		results.Elements = append(results.Elements, t.Eval(stmt))
+	}
+
+	return results
+}
+
 func (t *TestEnv) Eval(stmt Statement) object.Object {
 	t.StatementsRan = append(t.StatementsRan, stmt)
 	return object.New(stmt.String())
@@ -19,6 +29,9 @@ func (t *TestEnv) Set(_ string, _ interface{}) {}
 func (t *TestEnv) Get(_ string) object.Object {
 	return object.NULL
 }
+
+func (t *TestEnv) Interrupt() string { return "" }
+func (t *TestEnv) ClearInterrupt()   {}
 
 type TestStatement struct {
 	Out string
@@ -38,8 +51,8 @@ func TestExpressionsAreTruthy(t *testing.T) {
 		Statements: []Statement{&TestStatement{Out: "Statement 1"}},
 	}
 
-	result := tag.Eval(env, results)
-	if result.Value() != "Statement 1" {
+	result := tag.Eval(env, results).(*object.Array)
+	if result.Get(0).Value() != "Statement 1" {
 		t.Fatalf("Did not execute the success block, got %v", result)
 	}
 }
@@ -61,8 +74,8 @@ func TestElseIfIsTruthy(t *testing.T) {
 		},
 	}
 
-	result := tag.Eval(env, results)
-	if result.Value() != "Statement 2" {
+	result := tag.Eval(env, results).(*object.Array)
+	if result.Get(0).Value() != "Statement 2" {
 		t.Fatalf("Did not execute the elsif block, got %v", result)
 	}
 }

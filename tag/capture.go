@@ -1,8 +1,6 @@
 package tag
 
 import (
-	"strings"
-
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -29,13 +27,8 @@ func (c *Capture) Parse() *ParseConfig {
 }
 
 func (c *Capture) Eval(env Environment, results *ParseResult) object.Object {
-	content := strings.Builder{}
 	varName := results.Nodes[0].Value().(string)
 
-	for _, stmt := range results.Statements {
-		content.WriteString(env.Eval(stmt).Inspect())
-	}
-
-	env.Set(varName, content.String())
+	env.Set(varName, env.EvalAll(results.Statements))
 	return object.NULL
 }

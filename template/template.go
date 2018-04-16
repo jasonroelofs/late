@@ -34,10 +34,10 @@ func (t *Template) Render(context *context.Context) string {
 	}
 
 	eval := evaluator.New(ast, context)
-
 	final := strings.Builder{}
+	results := eval.Run()
 
-	for _, obj := range eval.Run() {
+	for _, obj := range results {
 		final.WriteString(obj.Inspect())
 	}
 

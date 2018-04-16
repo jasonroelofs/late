@@ -26,6 +26,11 @@ type ParseConfig struct {
 	// Provide the definitions of each subtag type here. The results of these subtags, when found,
 	// will be provided in the SubTagResults value of ParseResult.
 	SubTags []ParseConfig
+
+	// Flag this tag as one that will fire an Interrupt. When this tag is hit in the evaluator,
+	// all further evaluation will halt until another tag handles and clears the interrupt.
+	// For examples, see Continue and Break handling in the For tag.
+	Interrupt bool
 }
 
 // ParseResult is passed into the tags Eval() method during evaulation phase.

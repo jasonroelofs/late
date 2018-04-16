@@ -163,13 +163,16 @@ func (p *Parser) parseRawStatement() *ast.RawStatement {
 }
 
 func (p *Parser) parseCommentStatement() *ast.RawStatement {
+	// Skip the starting {#
 	p.nextToken()
 
 	if !p.expectPeek(token.CLOSE_COMMENT) {
 		return nil
 	}
 
+	// Move to the ending #}
 	p.nextToken()
+
 	return &ast.RawStatement{}
 }
 
@@ -209,7 +212,7 @@ func (p *Parser) parseVariableStatement() *ast.VariableStatement {
 	return stmt
 }
 
-func (p *Parser) parseTagStatement() *ast.TagStatement {
+func (p *Parser) parseTagStatement() ast.Statement {
 
 	// Move past the opening {%
 	p.nextToken()
@@ -274,6 +277,11 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 		return nil
 	}
 
+	if currentParseConfig.Interrupt {
+		p.popCurrentTag()
+		return &ast.InterruptStatement{Token: p.currToken, Name: stmt.TagName, Tag: stmt.Tag}
+	}
+
 	for _, parseRule := range currentParseConfig.Rules {
 		expectedTokenType := p.parseRuleToTokenType(parseRule)
 
@@ -285,7 +293,7 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 		p.nextToken()
 
 		if expectedTokenType != token.EXPRESSION && !p.currTokenIs(expectedTokenType) {
-			p.parserErrorf("Error parsing tag '%s': expected %s found %s", stmt.TagName, expectedTokenType, p.currToken.Type)
+			p.parserErrorf("Error parsing nodes for tag '%s': expected %s found %s", stmt.TagName, expectedTokenType, p.currToken.Type)
 			break
 		}
 
@@ -293,6 +301,11 @@ func (p *Parser) parseTagStatement() *ast.TagStatement {
 		case *tag.IdentifierRule:
 			stmt.Nodes = append(stmt.Nodes, &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal})
 		case *tag.LiteralRule:
+			if p.currToken.Literal != parseRule.Value {
+				p.parserErrorf("Error parsing nodes for tag '%s': expected literal `%s` found `%s`", stmt.TagName, parseRule.Value, p.currToken.Literal)
+				break
+			}
+
 			stmt.Nodes = append(stmt.Nodes, &ast.StringLiteral{Token: p.currToken, Value: p.currToken.Literal})
 		case *tag.ExpressionRule:
 			stmt.Nodes = append(stmt.Nodes, p.parseExpression(LOWEST))
@@ -355,10 +368,8 @@ func (p *Parser) popCurrentTag() *ast.TagStatement {
 
 func (p *Parser) parseRuleToTokenType(parseRule tag.ParseRule) token.TokenType {
 	switch parseRule := parseRule.(type) {
-	case *tag.IdentifierRule:
+	case *tag.IdentifierRule, *tag.LiteralRule:
 		return token.IDENT
-	case *tag.LiteralRule:
-		return token.STRING
 	case *tag.TokenRule:
 		return parseRule.Type
 	case *tag.ExpressionRule:
@@ -378,6 +389,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 		p.nextToken()
 
 		nextStmt = p.parseNext()
+
 		// Due to the not-really-nested nature of block tags, we look for
 		// any tag statements generated here and if the tag is actually a sub-tag
 		// then we need to not include that tag in the block statements list of

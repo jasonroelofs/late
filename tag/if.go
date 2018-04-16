@@ -1,8 +1,6 @@
 package tag
 
 import (
-	"strings"
-
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -32,25 +30,15 @@ func (i *If) Parse() *ParseConfig {
 
 func (i *If) Eval(env Environment, results *ParseResult) object.Object {
 	if object.Truthy(results.Nodes[0]) {
-		return i.evalStatements(env, results.Statements)
+		return env.EvalAll(results.Statements)
 	} else {
 		for _, subTag := range results.SubTagResults {
 			if (subTag.TagName == "elsif" && object.Truthy(subTag.Nodes[0])) ||
 				subTag.TagName == "else" {
-				return i.evalStatements(env, subTag.Statements)
+				return env.EvalAll(subTag.Statements)
 			}
 		}
 	}
 
 	return object.NULL
-}
-
-func (i *If) evalStatements(env Environment, statements []Statement) object.Object {
-	content := strings.Builder{}
-
-	for _, stmt := range statements {
-		content.WriteString(env.Eval(stmt).Inspect())
-	}
-
-	return object.New(content.String())
 }

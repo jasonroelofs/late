@@ -573,7 +573,7 @@ func TestTagErrors(t *testing.T) {
 		{`{% assign %}`, "Error parsing tag 'assign': expected IDENT"},
 		{`{% assign var %}`, "Error parsing tag 'assign': expected ASSIGN"},
 		{`{% assign var = %}`, "Error parsing tag 'assign': expected EXPRESSION"},
-		{`{% assign var 10 %}`, "Error parsing tag 'assign': expected ASSIGN found NUMBER"},
+		{`{% assign var 10 %}`, "Error parsing nodes for tag 'assign': expected ASSIGN found NUMBER"},
 
 		{`{% capture %}`, "Error parsing tag 'capture': expected IDENT"},
 		{`{% capture %}{% end %}`, "Error parsing tag 'capture': expected IDENT"},
