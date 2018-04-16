@@ -299,7 +299,7 @@ func (p *Parser) parseTagStatement() ast.Statement {
 
 		switch parseRule := parseRule.(type) {
 		case *tag.IdentifierRule:
-			stmt.Nodes = append(stmt.Nodes, &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal})
+			stmt.Nodes = append(stmt.Nodes, &ast.StringLiteral{Token: p.currToken, Value: p.currToken.Literal})
 		case *tag.LiteralRule:
 			if p.currToken.Literal != parseRule.Value {
 				p.parserErrorf("Error parsing nodes for tag '%s': expected literal `%s` found `%s`", stmt.TagName, parseRule.Value, p.currToken.Literal)

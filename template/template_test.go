@@ -154,6 +154,7 @@ func TestRender_Tags(t *testing.T) {
 
 		// 9
 		{`{% for num in [1,2,3] %}{{ num }}{% end %}`, "123"},
+		{`{% assign list = [1,2,3] %}{% for num in list %}{{ num }}{% end %}`, "123"},
 		{`{% for num in [1,2,3] %}
 				{% if num == 1 %}{% continue %}{% end %}
 				{{ num }}

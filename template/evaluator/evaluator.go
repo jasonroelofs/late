@@ -147,7 +147,7 @@ func (e *Evaluator) prepareTagResults(node *ast.TagStatement) *tag.ParseResult {
 	for _, node := range node.Nodes {
 		switch node := node.(type) {
 		case *ast.Identifier:
-			results = append(results, object.New(node.Value))
+			results = append(results, e.Get(node.Value))
 		default:
 			results = append(results, e.eval(node))
 		}
