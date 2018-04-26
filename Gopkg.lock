@@ -2,14 +2,20 @@
 
 
 [[projects]]
-  name = "github.com/sergi/go-diff"
-  packages = ["diffmatchpatch"]
-  revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
-  version = "v1.0.0"
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/olekukonko/tablewriter"
+  packages = ["."]
+  revision = "d5dd8a50526aadb3d5f2c9b5233277bc2db90e88"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "567942b2dc01367641a7bcaf945ee15b1b416f6f17d5b0fd842df1d4edb7ce26"
+  inputs-digest = "490bb6e272734bbcb83566c4ae448458c56fbe46bde647ab6798c65d0bee938e"
   solver-name = "gps-cdcl"
   solver-version = 1

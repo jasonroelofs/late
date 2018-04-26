@@ -5,9 +5,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/template"
@@ -19,6 +20,34 @@ import (
  * markdown files and runs the documentation-driven test suite to ensure what's
  * documented is exactly how the system works.
  */
+
+type TestDoc struct {
+	FilePath string
+	Segments []*Segment
+	Errors   []string
+	Failed   bool
+}
+
+type Segment struct {
+	IsLiquid bool
+	Input    string
+	Expected string
+	Output   string
+}
+
+func (s *Segment) Matches() bool {
+	return s.Output == s.Expected
+}
+
+func (s *Segment) PrintDiff() {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Expected", "Got"})
+	table.Append([]string{
+		s.Expected,
+		s.Output,
+	})
+	table.Render()
+}
 
 func main() {
 	docsDir := os.Args[1]
@@ -32,41 +61,50 @@ func main() {
 		}
 	}
 
-	var testCase string
-	var expected string
 	success := true
 
 	for _, file := range lateFiles {
-		fmt.Printf("Rendering %s...", file)
-		testCase, expected = parseAndTestDocFile(file)
-		t := template.New(testCase)
-		ctx := context.New()
-		results := t.Render(ctx)
+		fmt.Printf("\nRendering %s...", file)
+		testDoc := splitDocFile(file)
 
-		if len(t.Errors) > 0 {
-			success = false
-			fmt.Printf("\x1b[31m𝙓\x1b[0m\n")
-			fmt.Println("Rendering had the following errors:")
-			for _, err := range t.Errors {
-				fmt.Printf("\t %s\n", err)
+		// TODO Load up any data files and build up context
+
+		for _, segment := range testDoc.Segments {
+			if !segment.IsLiquid {
+				continue
 			}
 
+			t := template.New(segment.Input)
+			ctx := context.New()
+			segment.Output = t.Render(ctx)
+
+			if len(t.Errors) == 0 && segment.Matches() {
+				printSuccess()
+			} else {
+				testDoc.Failed = true
+				success = false
+
+				printFailure()
+				testDoc.Errors = t.Errors
+			}
+		}
+
+		if !testDoc.Failed {
 			continue
 		}
 
-		if expected == results {
-			fmt.Printf("\x1b[32m✓\x1b[0m\n")
-		} else {
-			success = false
-			fmt.Printf("\x1b[31m𝙓\x1b[0m\n")
-			dmp := diffmatchpatch.New()
-			diffs := dmp.DiffMain(expected, results, false)
-			fmt.Printf("Unexpected template result\n\n%s\n", dmp.DiffPrettyText(diffs))
+		fmt.Println()
+		fmt.Printf("%s had the following errors:\n", testDoc.FilePath)
+
+		for _, err := range testDoc.Errors {
+			fmt.Println(err)
 		}
 
-		// TODO
-		// If match, write out the resulting docs in docs/generated
-		// If not match, track as an error to output at the end
+		for _, segment := range testDoc.Segments {
+			if segment.IsLiquid && !segment.Matches() {
+				segment.PrintDiff()
+			}
+		}
 	}
 
 	if success {
@@ -76,40 +114,40 @@ func main() {
 	}
 }
 
-func parseAndTestDocFile(filePath string) (string, string) {
+func printSuccess() {
+	fmt.Printf("\x1b[32m✓\x1b[0m")
+}
+
+func printFailure() {
+	fmt.Printf("\x1b[31m𝙓\x1b[0m")
+}
+
+func splitDocFile(filePath string) *TestDoc {
 	content, _ := ioutil.ReadFile(filePath)
+	testDoc := &TestDoc{FilePath: filePath}
 
-	var testCase []string
-	var expected []string
-	var inTestCase bool
+	splitRegex := regexp.MustCompile("(?m)^$")
+	removeLeader := regexp.MustCompile(`(?m)^([<>]\s)`)
+	parts := splitRegex.Split(string(content), -1)
+	segment := &Segment{}
 
-	lines := strings.Split(string(content), "\n")
+	for _, part := range parts {
+		partStr := string(part)
+		clean := strings.TrimSpace(partStr)
 
-	for _, line := range lines {
-		if len(line) == 0 {
-			// Drop the new-line between the test case and
-			// the expected results to ensure the content lines
-			// up as expected.
-			if inTestCase {
-				inTestCase = false
-			} else {
-				testCase = append(testCase, line)
-				expected = append(expected, line)
-			}
-			continue
-		}
-
-		switch line[0] {
-		case '>':
-			testCase = append(testCase, line[1:])
-			inTestCase = true
-		case '<':
-			expected = append(expected, line[1:])
-		default:
-			testCase = append(testCase, line)
-			expected = append(expected, line)
+		if clean[0] == '>' {
+			segment.IsLiquid = true
+			segment.Input = removeLeader.ReplaceAllString(clean, "")
+		} else if clean[0] == '<' {
+			segment.Expected = removeLeader.ReplaceAllString(clean, "")
+			testDoc.Segments = append(testDoc.Segments, segment)
+			segment = &Segment{}
+		} else {
+			segment.Input = part
+			testDoc.Segments = append(testDoc.Segments, segment)
+			segment = &Segment{}
 		}
 	}
 
-	return strings.Join(testCase, "\n"), strings.Join(expected, "\n")
+	return testDoc
 }

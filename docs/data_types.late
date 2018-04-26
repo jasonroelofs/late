@@ -2,54 +2,54 @@ Late supports the following data types.
 
 Boolean (`true` and `false`)
 
->  {% assign test = true %}
->  {% if test %}
->    This is true!
->  {% end %}
+> {% assign test = true %}
+> {% if test %}
+>   This is true!
+> {% end %}
 >
->  {% assign test = false %}
->  {% if test %}
->    This is true!
->  {% else %}
->    This is false!
->  {% end %}
+> {% assign test = false %}
+> {% if test %}
+>   This is true!
+> {% else %}
+>   This is false!
+> {% end %}
 
-<  This is true!
+< This is true!
 <
-<  This is false!
+< This is false!
 
 Number. These can be integers or floating point numbers, positive and negative.
 
->  {% assign count = 3 %}
->  There are {{ count }} things.
+> {% assign count = 3 %}
+> There are {{ count }} things.
 >
->  {% assign quantity = 0.567359 %}
->  Which gives us a modular quantity of {{ quantity }}.
+> {% assign quantity = 0.567359 %}
+> Which gives us a modular quantity of {{ quantity }}.
 
-<  There are 3 things.
+< There are 3 things.
 <
-<  Which gives us a modular quantity of 0.567359
+< Which gives us a modular quantity of 0.567359
 
 String. Any value surrounded by single (`'`) or double (`"`) quotes. Quotes inside of a string need to be appropriately escaped with a backslash `\`.
 
->  {% assign value = "Strings are surrounted by double quote marks" %}
->  {{ value }}
->  {% assign value = 'Or single, it doesn\'t matter' %}
->  {{ value }}
+> {% assign value = "Strings are surrounted by double quote marks" %}
+> {{ value }}
+> {% assign value = 'Or single, it doesn\'t matter' %}
+> {{ value }}
 
-<  Strings are surrounded by double quote marks
-<  Or single, it doesn't matter
+< Strings are surrounded by double quote marks
+< Or single, it doesn't matter
 
 Array. A contiguous list of values of any supported data type. Any given array can contain values of multiple types.
 
->  {% assign list = [1, 2, 3] %}
->  There are {{ list | size }} elements in the list.
+> {% assign list = [1, 2, 3] %}
+> There are {{ list | size }} elements in the list.
 >
->  Lists have 0-based indexing. The third element is {{ list[2] }}.
+> Lists have 0-based indexing. The third element is {{ list[2] }}.
 
-<  There are 3 elements in the list.
+< There are 3 elements in the list.
 <
-<  Lists have 0-based indexing. The third element is 3.
+< Lists have 0-based indexing. The third element is 3.
 
 Hash. A set of key/value pairs that can be infinitely nested. The key and value can be any other Late data type.
 Hash data can be accessed via dot (`.`) notation or square bracket (`[]`) notation. If using dot notation, the
@@ -70,11 +70,11 @@ Similarly, any data provided to the template as global data is treated as a hash
 
 Nil. This value is used when there is nothing at a given variable or requested object location.
 
->  {% assign nothing = null %}
->  {% if nothing %}
->    There is something?
->  {% else %}
->    Nope, there is {{ nothing }}.
->  {% end %}
+> {% assign nothing = null %}
+> {% if nothing %}
+>   There is something?
+> {% else %}
+>   Nope, there is {{ nothing }}.
+> {% end %}
 
-<  Nope, there is .
+< Nope, there is .

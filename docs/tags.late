@@ -1,46 +1,46 @@
 Tags allow for non-output tools, like variable assignment, loops, and conditionals.
 
->  {% assign tag = "This is assigned from a tag." %}
->  {{ tag }}
+> {% assign tag = "This is assigned from a tag." %}
+> {{ tag }}
 
-<  This is assigned from a tag.
+< This is assigned from a tag.
 
 Loops
 
->  {% assign list = [1, 2, 3, 4, 5] %}
->  {% for item in list %}
->    {{ item }}
->  {% end %}
+> {% assign list = [1, 2, 3, 4, 5] %}
+> {% for item in list %}
+>   {{ item }}
+> {% end %}
 
-<  1
-<  2
-<  3
-<  4
-<  5
+< 1
+< 2
+< 3
+< 4
+< 5
 
 Conditionals
 
->  {% assign list_size = list | size %}
->  {% if list_size > 3 %}
->    The list is big!
->  {% end %}
+> {% assign list_size = 5 %}
+> {% if list_size > 3 %}
+>   The list is big!
+> {% end %}
 >
->  {% if list_size >= 5 %}
->    The list is really big!
->  {% else %}
->    The list is small
->  {% end %}
+> {% if list_size >= 5 %}
+>   The list is really big!
+> {% else %}
+>   The list is small
+> {% end %}
 
-<  The list is big!
+< The list is big!
 <
-<  The list is really big!
+< The list is really big!
 
 Capture
 
->  {% assign site_title = "My Cool Site" %}
->  {% capture header %}
->    <title>{{ site_title }}</title>
->  {% end %}
->  {{ header }}
+> {% assign site_title = "My Cool Site" %}
+> {% capture header %}
+>   <title>{{ site_title }}</title>
+> {% end %}
+> {{ header }}
 
-<  <title>My Cool Site</title>
+< <title>My Cool Site</title>

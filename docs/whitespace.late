@@ -1,0 +1,58 @@
+Late takes a very liberal approach to whitespace management. Where possible, Late will try to make the resulting output
+as clean as possible through preventing and removing excess whitespace. As best as possible, the output of a Late document
+shouldn't look like it went through a processor.
+
+Explicit whitespace in the input will be preserved.
+
+> {% capture poem %}
+> Forward and back,
+>     Said the old man in the dance,
+>   As he whittled away at his stick,
+>       Long gone, long gone, Without a glance,
+>           To the entrance made of brick.
+> {% end %}
+> {{ poem }}
+
+< Forward and back,
+<     Said the old man in the dance,
+<   As he whittled away at his stick,
+<       Long gone, long gone, Without a glance,
+<           To the entrance made of brick.
+
+Tags on their own line will remove the entire line.
+
+> {% assign red_hat = "patferrick" %}
+> {{ red_hat }}
+
+< patferrick
+
+Tags inline with other content will just be removed.
+
+> <div>{% assign red_hat = "patferrick" %}{{ red_hat }}</div>
+
+< <div>patferrick</div>
+
+Raw content will also have excess leading and trailing whitespace removed.
+
+> {{{ {{ "Raw Liquid" }} }}}
+
+< {{ "Raw Liquid" }}
+
+Nesting of tags will attempt to un-nest resulting content.
+
+> {% for x in [1, 2] %}
+>   {% for y in [3, 4] %}
+>     ({{ x }},{{ y }})
+>   {% end %}
+> {% end %}
+
+< (1,3)
+< (1,4)
+< (2,3)
+< (2,4)
+
+Similarly if block tags are inline, the inline will be kept but extra whitespace removed.
+
+> {% for n in [1, 2, 3] %}{{ n }}{% end %}
+
+< 123

@@ -1,17 +1,23 @@
 Filters convert and manipulate data for eventual output.
 
->  {% assign value = "Testing" %}{{ value | upcase }}
+> {{ "Testing" | upcase }}
 
-<  TESTING
+< TESTING
 
 Filters can also themselves take parameters.
 
->  {{ value | replace: "ing", with: "ers" }}
+> {{ "Testing" | replace: "ing", with: "ers" }}
 
-<  Testers
+< Testers
 
 Filters can be chained together, run as many as you want!
 
->  {{ value | replace: "ing", with: "ers" | upcase }}
+> {{ "Testing" | replace: "ing", with: "ers" | upcase }}
 
-<  TESTERS
+< TESTERS
+
+Filters can also be applied as sub-expressions.
+
+> {{ "Testing" | replace: "ing", with: ("ers" | upcase) }}
+
+< TestERS

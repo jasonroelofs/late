@@ -1,111 +1,111 @@
 This is the basic syntax for late.
 
-Output is handled through double curly brackets: `{{{ {{ ... }} }}}`
+Output is handled through double curly brackets: `{{ ... }}`
 
->  I call this page {{ title }}.
+> I call this page {{ title }}.
 
-<  I call this page Late Syntax.
+< I call this page Late Syntax.
 
 Output can be further manipulated through what are called filters. Filters can be chained
 together using the vertical bar (`|`).
 
->  I call this page {{ title | upcase }}.
+> I call this page {{ title | upcase }}.
 
-<  I call this page LATE SYNTAX.
+< I call this page LATE SYNTAX.
 
 Control structures like assignments, loops, and conditionals, as well as any operation that
 doesn't immediately create output in the final document are implemented as tags. Tags are denoted
-by the bracket-percent sequence: {{{ `{% ... %}` }}}.
+by the bracket-percent sequence: `{% ... %}`.
 
->  {% assign section = "Talking about Tags" %}
->  {{ tags }}.
+> {% assign section = "Talking about Tags" %}
+> {{ section }}.
 
-<  Talking about Tags.
+< Talking about Tags.
 
-Many tags come in block form and are closed by an explicit end tag: {{{ `{% ... %} ... {% end %}` }}}.
+Many tags come in block form and are closed by an explicit end tag: `{% ... %} ... {% end %}`.
 
->  {% if true %}
->    This statement is true!
->  {% end %}
+> {% if true %}
+>   This statement is true!
+> {% end %}
 
-<  This statement is true!
+< This statement is true!
 
 A template can be given objects with nested values. These values are accessible via dot notation (`.`).
 
->  {{ user.first_name }}
->  {{ user.last_name }}
+> {{ user.first_name }}
+> {{ user.last_name }}
 
-<  User's First Name
-<  User's Last Name
+< User's First Name
+< User's Last Name
 
 Arrays are first-class citizens in Late (see data_types for more information). Individual elements of an array are accessible through square brackets (`[]`). Array access indexes are 0-based.
 
->  {% assign list = [1, 2, 3, 4, 5] %}
->  {{ list[1] }} + {{ list[2] }} == {{ list[4] }}
+> {% assign list = [1, 2, 3, 4, 5] %}
+> {{ list[1] }} + {{ list[2] }} == {{ list[4] }}
 
-<  2 + 3 == 5
+< 2 + 3 == 5
 
 Likewise objects can have individual members accessed through square brackes but giving the string name of the field instead of a number. Both single and double quotes are supported.
 
->  {{ user["first_name"] }}
->  {{ user['last_name'] }}
+> {{ user["first_name"] }}
+> {{ user['last_name'] }}
 
-<  User's First Name
-<  User's Last Name
+< User's First Name
+< User's Last Name
 
 Late supports basic comparisons between numbers and strings.
 
->  {{ user.first_name == "User's First Name" }}
->  {{ user.last_name != "User's First Name" }}
->  {{ 1 < 3 }}
->  {{ 2 > 5 }}
->  {{ 4 <= 4 }}
->  {{ 5 >= 6 }}
+> {{ user.first_name == "User's First Name" }}
+> {{ user.last_name != "User's First Name" }}
+> {{ 1 < 3 }}
+> {{ 2 > 5 }}
+> {{ 4 <= 4 }}
+> {{ 5 >= 6 }}
 
-<  true
-<  true
-<  true
-<  false
-<  true
-<  false
+< true
+< true
+< true
+< false
+< true
+< false
 
 You can also chain these comparisons together using `and` and `or` or their symbol equivalents `&&` and `||`.
 
->  {{ 1 < 3 and 2 > 4 }}
->  {{ 1 < 3 or 2 > 4 }}
->  {{ 1 < 3 && 2 > 4 }}
->  {{ 1 < 3 || 2 > 4 }}
+> {{ 1 < 3 and 2 > 4 }}
+> {{ 1 < 3 or 2 > 4 }}
+> {{ 1 < 3 && 2 > 4 }}
+> {{ 1 < 3 || 2 > 4 }}
 
-<  false
-<  true
-<  false
-<  true
+< false
+< true
+< false
+< true
 
 Do note that chaining multiple comparisons together will always evaluate from left-to-right. However precedence can be manually applied by grouping with parentheses.
 
->  {{ true and false and true or true }}
->  {{ true and (false and (true or true)) }}
->  {{ false or true and false }}
+> {{ true and false and true or true }}
+> {{ true and (false and (true or true)) }}
+> {{ false or true and false }}
 
-<  true
-<  false
-<  false
+< true
+< false
+< false
 
 (TODO: Filter? Builtin?) For string and/or array comparisons, there is a special operator available, `contains`,
 which will provides easy substring or array inclusion checks inside of conditionals.
 
->  {{ user.first_name | contains: 'First' }}
->  {{ user.last_name | contains: 'First' }}
->  {% if list | contains: "3" %}
->    I see the number 3!
->  {% end %}
+> {{ user.first_name | contains: 'First' }}
+> {{ user.last_name | contains: 'First' }}
+> {% if list | contains: "3" %}
+>   I see the number 3!
+> {% end %}
 
-<  true
-<  false
-<  I see the number 3!
+< true
+< false
+< I see the number 3!
 
 To output raw liquid in the result, or to ensure that the templating engine doesn't try to execute
-text that may look like Late code, use triple brackets: `{{ "{{{ ... }}}" }}`.
+text that may look like Late code, use triple brackets: `{{{ ... }}}`.
 
 > {{{
 >   This contains raw {{ "liquid" }} code.
@@ -114,7 +114,7 @@ text that may look like Late code, use triple brackets: `{{ "{{{ ... }}}" }}`.
 < This contains raw {{ "liquid" }} code.
 
 Similarly, if you want to comment out or otherwise disable a section of the template from
-all parsing and evaluation, do so with the bracket-hash: {{{ `{# ... #}` }}}.
+all parsing and evaluation, do so with the bracket-hash: `{# ... #}`.
 
 > {#
 >   This will not show up in the results.

@@ -9,28 +9,28 @@ and any includes. One of the difficulties of Liquid is figuring out which variab
 where. To solve this, LATE works to make this as explicit as possible. By default, `assign` creates
 variables in file-scope. Variables can be promoted to render-scope with the `promote` tag (export?):
 
->  {% assign from_parent = "This is from the parent template" %}
->  {% include "scoping/include" %}
+> {% assign from_parent = "This is from the parent template" %}
+> {% include "scoping/include" %}
 >
->  {% promote from_file %}
->  {% include "scoping/include" %}
+> {% promote from_file %}
+> {% include "scoping/include" %}
 
-<  I don't have from_parent
+< I don't have from_parent
 <
-<  This is from the parent template
+< This is from the parent template
 
 Likewise, includes can promote variables that are then available back in the main template.
 
->  {% include "scoping/promote" %}
->  {{ from_include }}
+> {% include "scoping/promote" %}
+> {{ from_include }}
 
-<  This is from the include!
+< This is from the include!
 
 Global scope is set before rendering starts and consists of the values provided to the
 template as the starting data set to apply to the template.
 
->  {{ global_value }}
->  {% include "scoping/global" %}
+> {{ global_value }}
+> {% include "scoping/global" %}
 
-<  I am a value set globally.
-<  Include says: I am a value set globally.
+< I am a value set globally.
+< Include says: I am a value set globally.
