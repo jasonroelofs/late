@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/olekukonko/tablewriter"
-
 	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/template"
 )
@@ -37,16 +35,6 @@ type Segment struct {
 
 func (s *Segment) Matches() bool {
 	return s.Output == s.Expected
-}
-
-func (s *Segment) PrintDiff() {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Expected", "Got"})
-	table.Append([]string{
-		s.Expected,
-		s.Output,
-	})
-	table.Render()
 }
 
 func main() {
@@ -102,7 +90,9 @@ func main() {
 
 		for _, segment := range testDoc.Segments {
 			if segment.IsLiquid && !segment.Matches() {
-				segment.PrintDiff()
+				fmt.Println()
+				fmt.Printf("  E: %#v\n", segment.Expected)
+				fmt.Printf("  G: %#v\n", segment.Output)
 			}
 		}
 	}
