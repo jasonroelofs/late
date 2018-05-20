@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -55,7 +56,21 @@ func main() {
 		fmt.Printf("\nRendering %s...", file)
 		testDoc := splitDocFile(file)
 
-		// TODO Load up any data files and build up context
+		// Look for and load up content in a [docs file]/data.json
+		// to apply as input data for the render
+		dataDir := path.Dir(file)
+		testName := strings.Replace(path.Base(file), path.Ext(file), "", 1)
+		dataFile := path.Join(dataDir, testName, "data.json")
+
+		content, err := ioutil.ReadFile(dataFile)
+		var globalData context.Assigns
+
+		if err == nil {
+			jsonErr := json.Unmarshal(content, &globalData)
+			if jsonErr != nil {
+				fmt.Printf("\nUnable to read json content from %s, %#v\n", dataFile, jsonErr)
+			}
+		}
 
 		for _, segment := range testDoc.Segments {
 			if !segment.IsLiquid {
@@ -64,6 +79,7 @@ func main() {
 
 			t := template.New(segment.Input)
 			ctx := context.New()
+			ctx.Assign(globalData)
 			segment.Output = t.Render(ctx)
 
 			if len(t.Errors) == 0 && segment.Matches() {
