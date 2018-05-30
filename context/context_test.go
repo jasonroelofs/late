@@ -38,3 +38,26 @@ func TestGlobalAssigns(t *testing.T) {
 		t.Fatalf("key3 did not get added, got %s", c.Get("key3"))
 	}
 }
+
+func TestReadFile_NullReader(t *testing.T) {
+	c := New()
+
+	if c.ReadFile("file/path") != "ERROR: Reader not implemented. Cannot read content at file/path" {
+		t.Fatalf("Did not set up the Null Reader properly")
+	}
+}
+
+type TestReader struct{}
+
+func (t *TestReader) Read(path string) string {
+	return "I read from " + path
+}
+
+func TestReadFile_CustomReader(t *testing.T) {
+	c := New(Reader(new(TestReader)))
+
+	file := c.ReadFile("file/path")
+	if file != "I read from file/path" {
+		t.Fatalf("Did not set up the Reader properly. Got `%s`", file)
+	}
+}

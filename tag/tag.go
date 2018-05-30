@@ -16,6 +16,9 @@ type Tag interface {
 }
 
 type Environment interface {
+	ReadFile(string) string
+	Render(string) object.Object
+
 	Eval(Statement) object.Object
 	EvalAll([]Statement) object.Object
 	Get(string) object.Object

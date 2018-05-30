@@ -7,12 +7,20 @@ import (
 type Assigns map[string]interface{}
 
 type Context struct {
+	RenderFunc func(string, *Context) string
+
 	globalAssigns map[string]object.Object
+	reader        FileReader
 }
 
-func New() *Context {
+func New(options ...func(*Context)) *Context {
 	ctx := &Context{
 		globalAssigns: make(map[string]object.Object),
+		reader:        new(NullReader),
+	}
+
+	for _, opt := range options {
+		opt(ctx)
 	}
 
 	return ctx
@@ -36,4 +44,8 @@ func (c *Context) Get(name string) object.Object {
 	}
 
 	return obj
+}
+
+func (c *Context) ReadFile(path string) string {
+	return c.reader.Read(path)
 }

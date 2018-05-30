@@ -200,6 +200,39 @@ func TestRender_Tags(t *testing.T) {
 	}
 }
 
+type TestReader struct {
+	Body string
+}
+
+func (t *TestReader) Read(path string) string {
+	return t.Body + path
+}
+
+func TestRender_Include(t *testing.T) {
+	tests := []struct {
+		input    string
+		body     string
+		expected string
+	}{
+		{`{% include "partial" %}`, `{{ "This is" }} from `, "This is from partial"},
+		{`{% assign file = "file" %}{% include file %}`, "Included ", "Included file"},
+		// TODO error cases
+	}
+
+	for i, test := range tests {
+		tpl := New(test.input)
+		reader := &TestReader{Body: test.body}
+		ctx := context.New(context.Reader(reader))
+		results := tpl.Render(ctx)
+
+		checkNoErrors(t, tpl)
+
+		if results != test.expected {
+			t.Errorf("(%d) Include failed. Expected '%s' got '%s'", i, test.expected, results)
+		}
+	}
+}
+
 func checkNoErrors(t *testing.T, tpl *Template) {
 	if len(tpl.Errors) != 0 {
 		t.Fatalf("Errors rendering the template:\n%s", strings.Join(tpl.Errors, "\n"))

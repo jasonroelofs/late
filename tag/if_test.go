@@ -33,6 +33,9 @@ func (t *TestEnv) Get(_ string) object.Object {
 func (t *TestEnv) Interrupt() string { return "" }
 func (t *TestEnv) ClearInterrupt()   {}
 
+func (t *TestEnv) ReadFile(path string) string      { return path }
+func (t *TestEnv) Render(body string) object.Object { return object.New(body) }
+
 type TestStatement struct {
 	Out string
 }

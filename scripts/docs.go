@@ -38,8 +38,22 @@ func (s *Segment) Matches() bool {
 	return s.Output == s.Expected
 }
 
+type PartialReader struct {
+	BaseDir string
+}
+
+func (pr *PartialReader) Read(partialPath string) string {
+	content, err := ioutil.ReadFile(path.Join(pr.BaseDir, partialPath+".late"))
+	if err != nil {
+		return "Unable to find partial " + partialPath
+	}
+
+	return string(content)
+}
+
 func main() {
 	docsDir := os.Args[1]
+	reader := &PartialReader{BaseDir: docsDir}
 
 	var lateFiles []string
 
@@ -78,7 +92,7 @@ func main() {
 			}
 
 			t := template.New(segment.Input)
-			ctx := context.New()
+			ctx := context.New(context.Reader(reader))
 			ctx.Assign(globalData)
 			segment.Output = t.Render(ctx)
 

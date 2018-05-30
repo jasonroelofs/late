@@ -36,6 +36,19 @@ func (e *Evaluator) Run() []object.Object {
 	return objects
 }
 
+/**
+ * Begin implementation of the tag.Environment interface
+ */
+
+func (e *Evaluator) ReadFile(path string) string {
+	return e.context.ReadFile(path)
+}
+
+// Start a new render from the beginning for the given input string.
+func (e *Evaluator) Render(input string) object.Object {
+	return object.New(e.context.RenderFunc(input, e.context))
+}
+
 func (e *Evaluator) Set(variable string, value interface{}) {
 	e.context.Set(variable, value)
 }
@@ -76,6 +89,10 @@ func (e *Evaluator) EvalAll(statements []tag.Statement) object.Object {
 func (e *Evaluator) Eval(node tag.Statement) object.Object {
 	return e.eval(node.(ast.Node))
 }
+
+/**
+ * End tag.Environment
+ */
 
 func (e *Evaluator) eval(node ast.Node) object.Object {
 	if e.Interrupt() != "" {
