@@ -46,6 +46,7 @@ func init() {
 	AddTag(func() tag.Tag { return new(tag.Capture) })
 	AddTag(func() tag.Tag { return new(tag.If) })
 	AddTag(func() tag.Tag { return new(tag.Include) })
+	AddTag(func() tag.Tag { return new(tag.Promote) })
 
 	AddTag(func() tag.Tag { return new(tag.For) })
 	AddTag(func() tag.Tag { return new(tag.Continue) })

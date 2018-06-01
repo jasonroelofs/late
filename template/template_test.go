@@ -205,7 +205,7 @@ type TestReader struct {
 }
 
 func (t *TestReader) Read(path string) string {
-	return t.Body + path
+	return t.Body
 }
 
 func TestRender_Include(t *testing.T) {
@@ -214,8 +214,26 @@ func TestRender_Include(t *testing.T) {
 		body     string
 		expected string
 	}{
-		{`{% include "partial" %}`, `{{ "This is" }} from `, "This is from partial"},
-		{`{% assign file = "file" %}{% include file %}`, "Included ", "Included file"},
+		// Partials are fully rendered
+		{`{% include "partial" %}`, `{{ "This is" }} from partial`, "This is from partial"},
+
+		// Can pull include names from variables
+		{`{% assign file = "file" %}{% include file %}`, "Included file", "Included file"},
+
+		// Variable scoping to the partial
+		{
+			`{% include "partial" %}{{ from_partial }}`,
+			`{% assign from_partial = 'Hi' %}`,
+			``,
+		},
+
+		// Partials can promote values to global scope
+		{
+			`{% include "partial" %}{{ from_partial }}`,
+			`{% assign from_partial = 'Hi from partial' %}{% promote from_partial %}`,
+			`Hi from partial`,
+		},
+
 		// TODO error cases
 	}
 

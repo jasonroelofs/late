@@ -19,11 +19,14 @@ type Environment interface {
 	ReadFile(string) string
 	Render(string) object.Object
 
-	Eval(Statement) object.Object
-	EvalAll([]Statement) object.Object
 	Get(string) object.Object
 	Set(string, interface{})
+	Promote(string)
+	PushScope()
+	PopScope()
 
+	Eval(Statement) object.Object
+	EvalAll([]Statement) object.Object
 	Interrupt() string
 	ClearInterrupt()
 }

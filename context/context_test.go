@@ -39,6 +39,76 @@ func TestGlobalAssigns(t *testing.T) {
 	}
 }
 
+func TestScoping(t *testing.T) {
+	c := New()
+	c.Assign(Assigns{"global_key": "global_value"})
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkNoValue(t, c.Get("missing"))
+
+	// 1
+	c.PushScope()
+	c.Set("scope_key", "scope_value")
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkValueExists(t, c.Get("scope_key"), "scope_value")
+	checkNoValue(t, c.Get("missing"))
+
+	// 2
+	c.PushScope()
+	c.Set("deeper_key", "deeper_value")
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkValueExists(t, c.Get("scope_key"), "scope_value")
+	checkValueExists(t, c.Get("deeper_key"), "deeper_value")
+
+	// 3
+	c.PushScope()
+
+	// Deeper scopes can override values of higher scopes
+	c.Set("deeper_key", "even_deeper_value")
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkValueExists(t, c.Get("scope_key"), "scope_value")
+	checkValueExists(t, c.Get("deeper_key"), "even_deeper_value")
+
+	// Now make sure that things reset!
+	// 2
+	c.PopScope()
+
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkValueExists(t, c.Get("scope_key"), "scope_value")
+	checkValueExists(t, c.Get("deeper_key"), "deeper_value")
+
+	// 1
+	c.PopScope()
+
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkValueExists(t, c.Get("scope_key"), "scope_value")
+	checkNoValue(t, c.Get("deeper_key"))
+
+	// global
+	c.PopScope()
+
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkNoValue(t, c.Get("scope_key"))
+	checkNoValue(t, c.Get("deeper_key"))
+
+	// Doesn't crash if we pop from the top
+	c.PopScope()
+
+	checkValueExists(t, c.Get("global_key"), "global_value")
+	checkNoValue(t, c.Get("scope_key"))
+	checkNoValue(t, c.Get("deeper_key"))
+}
+
+func TestPromote(t *testing.T) {
+	c := New()
+	c.PushScope()
+	c.Set("var", "value")
+
+	c.Promote("var")
+
+	c.PopScope()
+	checkValueExists(t, c.Get("var"), "value")
+}
+
 func TestReadFile_NullReader(t *testing.T) {
 	c := New()
 
@@ -59,5 +129,17 @@ func TestReadFile_CustomReader(t *testing.T) {
 	file := c.ReadFile("file/path")
 	if file != "I read from file/path" {
 		t.Fatalf("Did not set up the Reader properly. Got `%s`", file)
+	}
+}
+
+func checkValueExists(t *testing.T, got object.Object, expected interface{}) {
+	if got.Value() != expected {
+		t.Errorf("Expected to find %#v but got %#v", expected, got)
+	}
+}
+
+func checkNoValue(t *testing.T, value object.Object) {
+	if value != object.NULL {
+		t.Errorf("Expected to find nil but found %#v", value)
 	}
 }

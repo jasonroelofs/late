@@ -9,14 +9,14 @@ type Assigns map[string]interface{}
 type Context struct {
 	RenderFunc func(string, *Context) string
 
-	globalAssigns map[string]object.Object
-	reader        FileReader
+	currentScope *Scope
+	reader       FileReader
 }
 
 func New(options ...func(*Context)) *Context {
 	ctx := &Context{
-		globalAssigns: make(map[string]object.Object),
-		reader:        new(NullReader),
+		currentScope: NewScope(nil),
+		reader:       new(NullReader),
 	}
 
 	for _, opt := range options {
@@ -33,17 +33,27 @@ func (c *Context) Assign(assigns Assigns) {
 }
 
 func (c *Context) Set(name string, value interface{}) {
-	c.globalAssigns[name] = object.New(value)
+	c.currentScope.Set(name, object.New(value))
 }
 
 func (c *Context) Get(name string) object.Object {
-	obj, ok := c.globalAssigns[name]
-	if !ok {
-		// WARN: Referenced undefined variable {name}
-		return object.NULL
+	return c.currentScope.Get(name)
+}
+
+func (c *Context) Promote(name string) {
+	c.currentScope.Promote(name)
+}
+
+func (c *Context) PushScope() {
+	c.currentScope = NewScope(c.currentScope)
+}
+
+func (c *Context) PopScope() {
+	if c.currentScope.Parent == nil {
+		return
 	}
 
-	return obj
+	c.currentScope = c.currentScope.Parent
 }
 
 func (c *Context) ReadFile(path string) string {

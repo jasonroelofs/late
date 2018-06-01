@@ -57,6 +57,18 @@ func (e *Evaluator) Get(variable string) object.Object {
 	return e.context.Get(variable)
 }
 
+func (e *Evaluator) Promote(variable string) {
+	e.context.Promote(variable)
+}
+
+func (e *Evaluator) PushScope() {
+	e.context.PushScope()
+}
+
+func (e *Evaluator) PopScope() {
+	e.context.PopScope()
+}
+
 func (e *Evaluator) Interrupt() string {
 	if e.currentInterrupt == nil {
 		return ""

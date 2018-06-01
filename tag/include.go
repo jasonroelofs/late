@@ -24,8 +24,12 @@ func (i *Include) Eval(env Environment, results *ParseResult) object.Object {
 	partialName := results.Nodes[0].Value().(string)
 	partialBody := env.ReadFile(partialName)
 
+	env.PushScope()
+
 	// Set up a new context stack?
 	result := env.Render(partialBody)
+
+	env.PopScope()
 
 	return object.New(result)
 }
