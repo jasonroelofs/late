@@ -7,6 +7,7 @@ import (
 type Scope struct {
 	Parent  *Scope
 	assigns map[string]object.Object
+	shadow  bool
 }
 
 func NewScope(parent *Scope) *Scope {
@@ -16,7 +17,28 @@ func NewScope(parent *Scope) *Scope {
 	}
 }
 
+func NewShadowScope(parent *Scope) *Scope {
+	newScope := NewScope(parent)
+	newScope.shadow = true
+	return newScope
+}
+
 func (s *Scope) Set(name string, value object.Object) {
+	if s.shadow {
+		// It's not possible to have a shadow root scope, so we don't check
+		// for that case here. I expect to be proven wrong at some point.
+		s.Parent.Set(name, value)
+		return
+	}
+
+	s.assigns[name] = value
+}
+
+func (s *Scope) ShadowSet(name string, value object.Object) {
+	if !s.shadow {
+		return
+	}
+
 	s.assigns[name] = value
 }
 

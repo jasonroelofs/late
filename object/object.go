@@ -29,7 +29,13 @@ func New(input interface{}) Object {
 	case string:
 		return &String{value: input}
 	case bool:
-		return &Boolean{value: input}
+		if input {
+			return TRUE
+		} else {
+			return FALSE
+		}
+	case nil:
+		return NULL
 	default:
 		obj := tryReflection(input)
 

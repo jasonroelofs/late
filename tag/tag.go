@@ -21,8 +21,10 @@ type Environment interface {
 
 	Get(string) object.Object
 	Set(string, interface{})
+	ShadowSet(string, interface{})
 	Promote(string)
 	PushScope()
+	PushShadowScope()
 	PopScope()
 
 	Eval(Statement) object.Object

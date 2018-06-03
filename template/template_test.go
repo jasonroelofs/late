@@ -155,6 +155,54 @@ func TestRender_Tags(t *testing.T) {
 		// 9
 		{`{% for num in [1,2,3] %}{{ num }}{% end %}`, "123"},
 		{`{% assign list = [1,2,3] %}{% for num in list %}{{ num }}{% end %}`, "123"},
+
+		// forloop variables
+		{`{% for num in [1,2,3] %}
+				{% if forloop.first %}First!{% end %}
+				{{ num }}
+				{% if forloop.last %}Last!{% end %}
+			{% end %}`,
+			"First!123Last!",
+		},
+
+		{`{% for num in [1,2,3] %}
+				({{ forloop.index }}-{{num}} of {{ forloop.length }})
+			{% end %}`,
+			"(0-1 of 3)(1-2 of 3)(2-3 of 3)",
+		},
+
+		// forloop is scoped to the forloop only
+		{`{% for num in [1] %}{% end %}{{ forloop.length }}`, ""},
+
+		// Assigns run in a forloop are accessible outside of the for loop
+		// (ensuring current-render-level scoping stays valid
+		{`{% for num in [1,2,3] %}
+				{% assign found = num %}
+			{% end %}
+			I found {{ found }}!`,
+			"I found 3!",
+		},
+
+		// And for super sanity check, make sure assigns works in many nested
+		// for loops and that forloop is scoped to only its own for loop
+		{`{% assign z_count = 0 %}
+			{% for x in [1,2,3] %}
+				{% if forloop.first %}x{% end %}
+
+				{% for y in [1,2,3] %}
+					{% if forloop.index == 1 %}y{% end %}
+
+					{% for z in [1,2,3] %}
+						{% if forloop.last %}z{% end %}
+						{% assign z_count = z_count + 1 %}
+					{% end %}
+				{% end %}
+			{% end %}
+			{{ z_count }}`,
+			"xzyzzzyzzzyzz27",
+		},
+
+		// Interrupts
 		{`{% for num in [1,2,3] %}
 				{% if num == 1 %}{% continue %}{% end %}
 				{{ num }}

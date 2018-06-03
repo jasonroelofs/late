@@ -98,6 +98,37 @@ func TestScoping(t *testing.T) {
 	checkNoValue(t, c.Get("deeper_key"))
 }
 
+func Test_ShadowScoping(t *testing.T) {
+	c := New()
+	c.Assign(Assigns{"global_key": "global_value"})
+
+	c.PushShadowScope()
+	c.ShadowSet("my_key", "my_value")
+
+	checkValueExists(t, c.Get("my_key"), "my_value")
+	checkValueExists(t, c.Get("global_key"), "global_value")
+
+	c.PushShadowScope()
+	c.Set("new_key", "new_value")
+	c.ShadowSet("deep_key", "deep_value")
+
+	checkValueExists(t, c.Get("deep_key"), "deep_value")
+	checkValueExists(t, c.Get("my_key"), "my_value")
+	checkValueExists(t, c.Get("new_key"), "new_value")
+	checkValueExists(t, c.Get("global_key"), "global_value")
+
+	// Only the shadow-set variable should disappear.
+	// the "Set" value should have been applied to the lowest
+	// real scope.
+	c.PopScope()
+	c.PopScope()
+
+	checkNoValue(t, c.Get("my_key"))
+	checkNoValue(t, c.Get("deep_key"))
+	checkValueExists(t, c.Get("new_key"), "new_value")
+	checkValueExists(t, c.Get("global_key"), "global_value")
+}
+
 func TestPromote(t *testing.T) {
 	c := New()
 	c.PushScope()

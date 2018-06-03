@@ -16,7 +16,6 @@ func TestNew(t *testing.T) {
 		{float32(1.5), &Number{value: 1.5}},
 		{float64(1.5), &Number{value: 1.5}},
 		{"String", &String{value: "String"}},
-		{true, &Boolean{value: true}},
 	}
 
 	// To cover:
@@ -28,6 +27,26 @@ func TestNew(t *testing.T) {
 
 		if results.Inspect() != test.expected.Inspect() {
 			t.Errorf("Did not get the right object back. Expected %#v got %#v", test.expected, results)
+		}
+	}
+}
+
+func TestNew_StaticMatching(t *testing.T) {
+	tests := []struct {
+		input    interface{}
+		expected Object
+	}{
+		{true, TRUE},
+		{false, FALSE},
+		{nil, NULL},
+	}
+
+	for _, test := range tests {
+		result := New(test.input)
+
+		if result != test.expected {
+			t.Errorf("Failed to match %v to the static type %v, ended up with %#v",
+				test.input, test.expected, result)
 		}
 	}
 }

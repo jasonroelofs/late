@@ -25,14 +25,16 @@ func (t *TestEnv) Eval(stmt Statement) object.Object {
 	return object.New(stmt.String())
 }
 
-func (t *TestEnv) Set(_ string, _ interface{}) {}
+func (t *TestEnv) Set(_ string, _ interface{})       {}
+func (t *TestEnv) ShadowSet(_ string, _ interface{}) {}
 func (t *TestEnv) Get(_ string) object.Object {
 	return object.NULL
 }
 func (t *TestEnv) Promote(_ string) {}
 
-func (t *TestEnv) PushScope() {}
-func (t *TestEnv) PopScope()  {}
+func (t *TestEnv) PushScope()       {}
+func (t *TestEnv) PushShadowScope() {}
+func (t *TestEnv) PopScope()        {}
 
 func (t *TestEnv) Interrupt() string { return "" }
 func (t *TestEnv) ClearInterrupt()   {}

@@ -36,6 +36,10 @@ func (c *Context) Set(name string, value interface{}) {
 	c.currentScope.Set(name, object.New(value))
 }
 
+func (c *Context) ShadowSet(name string, value interface{}) {
+	c.currentScope.ShadowSet(name, object.New(value))
+}
+
 func (c *Context) Get(name string) object.Object {
 	return c.currentScope.Get(name)
 }
@@ -46,6 +50,10 @@ func (c *Context) Promote(name string) {
 
 func (c *Context) PushScope() {
 	c.currentScope = NewScope(c.currentScope)
+}
+
+func (c *Context) PushShadowScope() {
+	c.currentScope = NewShadowScope(c.currentScope)
 }
 
 func (c *Context) PopScope() {

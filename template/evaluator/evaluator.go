@@ -53,6 +53,10 @@ func (e *Evaluator) Set(variable string, value interface{}) {
 	e.context.Set(variable, value)
 }
 
+func (e *Evaluator) ShadowSet(variable string, value interface{}) {
+	e.context.ShadowSet(variable, value)
+}
+
 func (e *Evaluator) Get(variable string) object.Object {
 	return e.context.Get(variable)
 }
@@ -67,6 +71,10 @@ func (e *Evaluator) PushScope() {
 
 func (e *Evaluator) PopScope() {
 	e.context.PopScope()
+}
+
+func (e *Evaluator) PushShadowScope() {
+	e.context.PushShadowScope()
 }
 
 func (e *Evaluator) Interrupt() string {
