@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -26,9 +27,9 @@ func (c *Capture) Parse() *ParseConfig {
 	}
 }
 
-func (c *Capture) Eval(env Environment, results *ParseResult) object.Object {
+func (c *Capture) Eval(ctx *context.Context, results *ParseResult) object.Object {
 	varName := results.Nodes[0].Value().(string)
 
-	env.Set(varName, env.EvalAll(results.Statements))
+	ctx.Set(varName, ctx.EvalAll(results.Statements))
 	return object.NULL
 }

@@ -2,6 +2,7 @@ package tag
 
 import (
 	"github.com/jasonroelofs/late/object"
+	s "github.com/jasonroelofs/late/template/statement"
 	"github.com/jasonroelofs/late/template/token"
 )
 
@@ -44,7 +45,7 @@ type ParseResult struct {
 
 	// For block-type tags, this list of statements correspond to the content of the
 	// block and should be evaulated in order according to the rules of the tag.
-	Statements []Statement
+	Statements []s.Statement
 
 	// For block tags that can have sub-tags (e.g. if, case), each found and valid
 	// subtag will have it's own set of ParseResults.

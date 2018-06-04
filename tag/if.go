@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -28,14 +29,14 @@ func (i *If) Parse() *ParseConfig {
 	}
 }
 
-func (i *If) Eval(env Environment, results *ParseResult) object.Object {
+func (i *If) Eval(ctx *context.Context, results *ParseResult) object.Object {
 	if object.Truthy(results.Nodes[0]) {
-		return env.EvalAll(results.Statements)
+		return ctx.EvalAll(results.Statements)
 	} else {
 		for _, subTag := range results.SubTagResults {
 			if (subTag.TagName == "elsif" && object.Truthy(subTag.Nodes[0])) ||
 				subTag.TagName == "else" {
-				return env.EvalAll(subTag.Statements)
+				return ctx.EvalAll(subTag.Statements)
 			}
 		}
 	}

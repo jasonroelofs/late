@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -23,10 +24,10 @@ func (p *Promote) Parse() *ParseConfig {
 	}
 }
 
-func (p *Promote) Eval(env Environment, results *ParseResult) object.Object {
+func (p *Promote) Eval(ctx *context.Context, results *ParseResult) object.Object {
 	varName := results.Nodes[0].Value().(string)
 
-	env.Promote(varName)
+	ctx.Promote(varName)
 
 	return object.NULL
 }

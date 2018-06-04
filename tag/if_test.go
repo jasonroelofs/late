@@ -3,44 +3,10 @@ package tag
 import (
 	"testing"
 
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
+	s "github.com/jasonroelofs/late/template/statement"
 )
-
-type TestEnv struct {
-	StatementsRan []Statement
-}
-
-func (t *TestEnv) EvalAll(stmts []Statement) object.Object {
-	results := &object.Array{}
-
-	for _, stmt := range stmts {
-		results.Elements = append(results.Elements, t.Eval(stmt))
-	}
-
-	return results
-}
-
-func (t *TestEnv) Eval(stmt Statement) object.Object {
-	t.StatementsRan = append(t.StatementsRan, stmt)
-	return object.New(stmt.String())
-}
-
-func (t *TestEnv) Set(_ string, _ interface{})       {}
-func (t *TestEnv) ShadowSet(_ string, _ interface{}) {}
-func (t *TestEnv) Get(_ string) object.Object {
-	return object.NULL
-}
-func (t *TestEnv) Promote(_ string) {}
-
-func (t *TestEnv) PushScope()       {}
-func (t *TestEnv) PushShadowScope() {}
-func (t *TestEnv) PopScope()        {}
-
-func (t *TestEnv) Interrupt() string { return "" }
-func (t *TestEnv) ClearInterrupt()   {}
-
-func (t *TestEnv) ReadFile(path string) string      { return path }
-func (t *TestEnv) Render(body string) object.Object { return object.New(body) }
 
 type TestStatement struct {
 	Out string
@@ -50,17 +16,40 @@ func (t TestStatement) String() string {
 	return t.Out
 }
 
+type TestEval struct {
+	StatementsRan []s.Statement
+}
+
+func (t *TestEval) EvalAll(stmts []s.Statement) object.Object {
+	results := &object.Array{}
+
+	for _, stmt := range stmts {
+		results.Elements = append(results.Elements, t.Eval(stmt))
+	}
+
+	return results
+}
+
+func (t *TestEval) Eval(stmt s.Statement) object.Object {
+	t.StatementsRan = append(t.StatementsRan, stmt)
+	return object.New(stmt.String())
+}
+func (t *TestEval) Interrupt() string { return "" }
+func (t *TestEval) ClearInterrupt()   {}
+
 func TestExpressionsAreTruthy(t *testing.T) {
 	tag := new(If)
+	eval := new(TestEval)
+	ctx := context.New()
+	ctx.SetEvaluator(eval)
 
-	env := new(TestEnv)
 	results := &ParseResult{
 		TagName:    "if",
 		Nodes:      []object.Object{object.New("Value")},
-		Statements: []Statement{&TestStatement{Out: "Statement 1"}},
+		Statements: []s.Statement{&TestStatement{Out: "Statement 1"}},
 	}
 
-	result := tag.Eval(env, results).(*object.Array)
+	result := tag.Eval(ctx, results).(*object.Array)
 	if result.Get(0).Value() != "Statement 1" {
 		t.Fatalf("Did not execute the success block, got %v", result)
 	}
@@ -68,22 +57,24 @@ func TestExpressionsAreTruthy(t *testing.T) {
 
 func TestElseIfIsTruthy(t *testing.T) {
 	tag := new(If)
-	env := new(TestEnv)
+	eval := new(TestEval)
+	ctx := context.New()
+	ctx.SetEvaluator(eval)
 
 	results := &ParseResult{
 		TagName:    "if",
 		Nodes:      []object.Object{object.FALSE},
-		Statements: []Statement{&TestStatement{Out: "Statement 1"}},
+		Statements: []s.Statement{&TestStatement{Out: "Statement 1"}},
 		SubTagResults: []*ParseResult{
 			&ParseResult{
 				TagName:    "elsif",
 				Nodes:      []object.Object{object.New(123)},
-				Statements: []Statement{&TestStatement{Out: "Statement 2"}},
+				Statements: []s.Statement{&TestStatement{Out: "Statement 2"}},
 			},
 		},
 	}
 
-	result := tag.Eval(env, results).(*object.Array)
+	result := tag.Eval(ctx, results).(*object.Array)
 	if result.Get(0).Value() != "Statement 2" {
 		t.Fatalf("Did not execute the elsif block, got %v", result)
 	}

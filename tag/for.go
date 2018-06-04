@@ -3,6 +3,7 @@ package tag
 import (
 	"strings"
 
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -26,7 +27,7 @@ func (f *For) Parse() *ParseConfig {
 	}
 }
 
-func (f *For) Eval(env Environment, results *ParseResult) object.Object {
+func (f *For) Eval(ctx *context.Context, results *ParseResult) object.Object {
 	varName := results.Nodes[0].Value().(string)
 
 	// TODO: Error if collection isn't an Array
@@ -37,33 +38,33 @@ func (f *For) Eval(env Environment, results *ParseResult) object.Object {
 	// Set up our shadow scope that keeps `forloop` and the loop variable
 	// scoped to this for loop but allows users to assign values to the template's
 	// scope.
-	env.PushShadowScope()
+	ctx.PushShadowScope()
 
 	forLoopInfo := object.NewHash()
 	forLoopInfo.Set(LENGTH, object.New(len(collection.Elements)))
-	env.ShadowSet("forloop", forLoopInfo)
+	ctx.ShadowSet("forloop", forLoopInfo)
 
 loop:
 	for idx, entry := range collection.Elements {
-		env.ShadowSet(varName, entry)
+		ctx.ShadowSet(varName, entry)
 
 		forLoopInfo.Set(INDEX, object.New(idx))
 		forLoopInfo.Set(FIRST, object.New(idx == 0))
 		forLoopInfo.Set(LAST, object.New(idx == len(collection.Elements)-1))
 
-		output.WriteString(env.EvalAll(results.Statements).Inspect())
+		output.WriteString(ctx.EvalAll(results.Statements).Inspect())
 
-		switch env.Interrupt() {
+		switch ctx.Interrupt() {
 		case "continue":
-			env.ClearInterrupt()
+			ctx.ClearInterrupt()
 			continue loop
 		case "break":
-			env.ClearInterrupt()
+			ctx.ClearInterrupt()
 			break loop
 		}
 	}
 
-	env.PopScope()
+	ctx.PopScope()
 
 	return object.New(output.String())
 }
@@ -78,7 +79,7 @@ func (c *Continue) Parse() *ParseConfig {
 	return &ParseConfig{TagName: "continue", Interrupt: true}
 }
 
-func (c *Continue) Eval(_ Environment, _ *ParseResult) object.Object {
+func (c *Continue) Eval(_ *context.Context, _ *ParseResult) object.Object {
 	return object.NULL
 }
 
@@ -88,6 +89,6 @@ func (b *Break) Parse() *ParseConfig {
 	return &ParseConfig{TagName: "break", Interrupt: true}
 }
 
-func (b *Break) Eval(_ Environment, _ *ParseResult) object.Object {
+func (b *Break) Eval(_ *context.Context, _ *ParseResult) object.Object {
 	return object.NULL
 }

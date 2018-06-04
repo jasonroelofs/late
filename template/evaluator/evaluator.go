@@ -8,6 +8,7 @@ import (
 	"github.com/jasonroelofs/late/object"
 	"github.com/jasonroelofs/late/tag"
 	"github.com/jasonroelofs/late/template/ast"
+	s "github.com/jasonroelofs/late/template/statement"
 )
 
 type Evaluator struct {
@@ -18,10 +19,14 @@ type Evaluator struct {
 }
 
 func New(template *ast.Template, context *context.Context) *Evaluator {
-	return &Evaluator{
+	e := &Evaluator{
 		template: template,
 		context:  context,
 	}
+
+	context.SetEvaluator(e)
+
+	return e
 }
 
 // TODO: Return an object.Array?
@@ -36,47 +41,6 @@ func (e *Evaluator) Run() []object.Object {
 	return objects
 }
 
-/**
- * Begin implementation of the tag.Environment interface
- */
-
-func (e *Evaluator) ReadFile(path string) string {
-	return e.context.ReadFile(path)
-}
-
-// Start a new render from the beginning for the given input string.
-func (e *Evaluator) Render(input string) object.Object {
-	return object.New(e.context.RenderFunc(input, e.context))
-}
-
-func (e *Evaluator) Set(variable string, value interface{}) {
-	e.context.Set(variable, value)
-}
-
-func (e *Evaluator) ShadowSet(variable string, value interface{}) {
-	e.context.ShadowSet(variable, value)
-}
-
-func (e *Evaluator) Get(variable string) object.Object {
-	return e.context.Get(variable)
-}
-
-func (e *Evaluator) Promote(variable string) {
-	e.context.Promote(variable)
-}
-
-func (e *Evaluator) PushScope() {
-	e.context.PushScope()
-}
-
-func (e *Evaluator) PopScope() {
-	e.context.PopScope()
-}
-
-func (e *Evaluator) PushShadowScope() {
-	e.context.PushShadowScope()
-}
-
 func (e *Evaluator) Interrupt() string {
 	if e.currentInterrupt == nil {
 		return ""
@@ -89,7 +53,7 @@ func (e *Evaluator) ClearInterrupt() {
 	e.currentInterrupt = nil
 }
 
-func (e *Evaluator) EvalAll(statements []tag.Statement) object.Object {
+func (e *Evaluator) EvalAll(statements []s.Statement) object.Object {
 	out := strings.Builder{}
 
 	for _, stmt := range statements {
@@ -106,13 +70,9 @@ func (e *Evaluator) EvalAll(statements []tag.Statement) object.Object {
 	return object.New(out.String())
 }
 
-func (e *Evaluator) Eval(node tag.Statement) object.Object {
+func (e *Evaluator) Eval(node s.Statement) object.Object {
 	return e.eval(node.(ast.Node))
 }
-
-/**
- * End tag.Environment
- */
 
 func (e *Evaluator) eval(node ast.Node) object.Object {
 	if e.Interrupt() != "" {
@@ -175,7 +135,7 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 }
 
 func (e *Evaluator) evalTagStatement(node *ast.TagStatement) object.Object {
-	return node.Tag.Eval(e, e.prepareTagResults(node))
+	return node.Tag.Eval(e.context, e.prepareTagResults(node))
 }
 
 func (e *Evaluator) prepareTagResults(node *ast.TagStatement) *tag.ParseResult {
@@ -184,7 +144,7 @@ func (e *Evaluator) prepareTagResults(node *ast.TagStatement) *tag.ParseResult {
 	for _, node := range node.Nodes {
 		switch node := node.(type) {
 		case *ast.Identifier:
-			results = append(results, e.Get(node.Value))
+			results = append(results, e.context.Get(node.Value))
 		default:
 			results = append(results, e.eval(node))
 		}

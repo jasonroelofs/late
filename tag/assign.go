@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 	"github.com/jasonroelofs/late/template/token"
 )
@@ -23,10 +24,10 @@ func (a *Assign) Parse() *ParseConfig {
 	}
 }
 
-func (a *Assign) Eval(env Environment, results *ParseResult) object.Object {
+func (a *Assign) Eval(ctx *context.Context, results *ParseResult) object.Object {
 	varName := results.Nodes[0].Value().(string)
 	result := results.Nodes[2]
 
-	env.Set(varName, result)
+	ctx.Set(varName, result)
 	return object.NULL
 }

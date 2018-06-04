@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -13,7 +14,7 @@ func (i *Include) Parse() *ParseConfig {
 	}
 }
 
-func (i *Include) Eval(env Environment, results *ParseResult) object.Object {
+func (i *Include) Eval(ctx *context.Context, results *ParseResult) object.Object {
 	// TODO: Make sure we have a string here
 	// something like,
 	//
@@ -22,14 +23,14 @@ func (i *Include) Eval(env Environment, results *ParseResult) object.Object {
 	//
 
 	partialName := results.Nodes[0].Value().(string)
-	partialBody := env.ReadFile(partialName)
+	partialBody := ctx.ReadFile(partialName)
 
-	env.PushScope()
+	ctx.PushScope()
 
 	// Set up a new context stack?
-	result := env.Render(partialBody)
+	result := ctx.Render(partialBody)
 
-	env.PopScope()
+	ctx.PopScope()
 
 	return object.New(result)
 }

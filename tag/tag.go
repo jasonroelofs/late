@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"github.com/jasonroelofs/late/context"
 	"github.com/jasonroelofs/late/object"
 )
 
@@ -12,25 +13,7 @@ import (
 
 type Tag interface {
 	Parse() *ParseConfig
-	Eval(Environment, *ParseResult) object.Object
-}
-
-type Environment interface {
-	ReadFile(string) string
-	Render(string) object.Object
-
-	Get(string) object.Object
-	Set(string, interface{})
-	ShadowSet(string, interface{})
-	Promote(string)
-	PushScope()
-	PushShadowScope()
-	PopScope()
-
-	Eval(Statement) object.Object
-	EvalAll([]Statement) object.Object
-	Interrupt() string
-	ClearInterrupt()
+	Eval(*context.Context, *ParseResult) object.Object
 }
 
 type Statement interface {
