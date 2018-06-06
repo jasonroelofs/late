@@ -13,6 +13,13 @@ type Token struct {
 	// token. It includes all punctuation and leading white space
 	// and can be used to perfectly reproduce the input.
 	Raw string
+
+	// Line number where this token starts
+	Line int
+
+	// Number of characters in from the beginning of the current line
+	// where this token starts
+	Char int
 }
 
 const (

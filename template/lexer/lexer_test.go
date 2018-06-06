@@ -269,6 +269,52 @@ func TestCommentsAndRaw(t *testing.T) {
 	testTemplateGeneratesTokens(t, input, tests)
 }
 
+func TestLineAndCharacterNumbers(t *testing.T) {
+	input := `First
+		{{ "Second" }}
+		{% assign
+				third = "third" %}{{ third }}`
+
+	tests := []struct {
+		literal string
+		line    int
+		char    int
+	}{
+		{"First\n\t\t", 1, 1},
+		{"{{", 2, 3},
+		{`Second`, 2, 6},
+		{"}}", 2, 15},
+		{"\n\t\t", 2, 17},
+		{"{%", 3, 3},
+		{"assign", 3, 6},
+		{"third", 4, 5},
+		{"=", 4, 11},
+		{`third`, 4, 13},
+		{"%}", 4, 21},
+		{"{{", 4, 23},
+		{"third", 4, 26},
+		{"}}", 4, 32},
+	}
+
+	l := New(input)
+
+	for i, test := range tests {
+		tok := l.NextToken()
+
+		if tok.Literal != test.literal {
+			t.Fatalf("(%d) Wrong token returned from lexer. expected=%s got=%s", i, test.literal, tok.Literal)
+		}
+
+		if tok.Line != test.line {
+			t.Fatalf("(%d) Wrong line number on %#v, expected=%d got=%d", i, test.literal, test.line, tok.Line)
+		}
+
+		if tok.Char != test.char {
+			t.Fatalf("(%d) Wrong character number on %#v, expected=%d got=%d", i, test.literal, test.char, tok.Char)
+		}
+	}
+}
+
 func testTemplateGeneratesTokens(t *testing.T, template string, expectedTokens []ExpectedToken) {
 	l := New(template)
 

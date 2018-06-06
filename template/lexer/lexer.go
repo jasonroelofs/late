@@ -22,6 +22,12 @@ type Lexer struct {
 	// As comments and raw code can contain invalid liquid, we need to flag the lexer
 	// to just parse everything as a single RAW token between the delimiters.
 	nextTokenEndsAt string
+
+	// Keep track of location positioning so we can properly tag each token
+	// with the correct line and char position.
+	// These values are 1-based
+	currentLine int
+	currentChar int
 }
 
 func New(input string) *Lexer {
@@ -30,21 +36,23 @@ func New(input string) *Lexer {
 		eofPosition:  len(input) - 1,
 		tokenStart:   0,
 		lookPosition: 0,
+		currentLine:  1,
+		currentChar:  1,
 	}
 }
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
-	// With the assumption that the end of the previous token will include
-	// all of the characters from l.tokenStart to l.lookPosition (exclusive),
-	// the next token obviously starts at the current look position.
-	l.tokenStart = l.lookPosition
-
 	if l.atEOF() {
 		tok.Type = token.EOF
 		return tok
 	}
+
+	// With the assumption that the end of the previous token will include
+	// all of the characters from l.tokenStart to l.lookPosition (exclusive),
+	// the next token obviously starts at the current look position.
+	l.startNextToken()
 
 	// Handle the case where two code tags are right next to
 	// each other, e.g. {{ 1 }}{{ 2 }}. We don't want an empty
@@ -252,14 +260,6 @@ func (l *Lexer) atCodeStart() bool {
 	return at == '{' && (peek == '{' || peek == '%' || peek == '#')
 }
 
-func (l *Lexer) peek() byte {
-	return l.input[l.lookPosition]
-}
-
-func (l *Lexer) step() {
-	l.lookPosition += 1
-}
-
 func (l *Lexer) readString() string {
 	// Keep track of what character opened our string (' or ")
 	// so we can find our matching closing quote,
@@ -314,20 +314,14 @@ func (l *Lexer) readIdentifier() string {
 
 // Build a token out of the current single character
 func (l *Lexer) charToken(t token.TokenType) token.Token {
-	char := string(l.peek())
-
-	tok := token.Token{
-		Type:    t,
-		Literal: char,
-		Raw:     char,
-	}
-
 	// If we're here, it means that lookPosition is the character we need to store
 	// in the token so to fit our rule the lookPosition is always at the start
 	// of the next token, kick us forward.
+	// This is also the expectation of the stringToken and manualToken methods
+	// so this call sets us up to just use those.
 	l.step()
 
-	return tok
+	return l.stringToken(t)
 }
 
 // Build a token out of the full string between tokenStart and lookPosition
@@ -352,13 +346,68 @@ func (l *Lexer) stringToken(t token.TokenType) token.Token {
 }
 
 func (l *Lexer) manualToken(t token.TokenType, literal string) token.Token {
+	raw := l.input[l.tokenStart:l.lookPosition]
+
+	// Kick our character counter forward until we hit the first non-whitespace
+	// character in "raw", as we don't want to point to the leading character of
+	// the raw text but of the literal itself.
+	offset := 0
+	lineWas := l.currentLine
+	charWas := l.currentChar
+
+	for offset < len(raw) && l.isWhitespace(raw[offset]) {
+		l.stepLocationInfo(raw[offset])
+		offset += 1
+	}
+
+	// If the raw is nothing but whitespace, we fall back
+	// to the original settings
+	if offset == len(raw) {
+		l.currentLine = lineWas
+		l.currentChar = charWas
+	}
+
 	tok := token.Token{
 		Type:    t,
 		Literal: literal,
-		Raw:     l.input[l.tokenStart:l.lookPosition],
+		Raw:     raw,
+		Line:    l.currentLine,
+		Char:    l.currentChar,
 	}
 
+	l.currentLine = lineWas
+	l.currentChar = charWas
+
 	return tok
+}
+
+/**
+ * The start of our next token lives at lookPosition, so we need to move our
+ * tokenStart pointer to that new location and prepare for our next step.
+ * This includes keeping track of new lines and character positioning.
+ */
+func (l *Lexer) startNextToken() {
+	for l.tokenStart < l.lookPosition {
+		l.stepLocationInfo(l.input[l.tokenStart])
+		l.tokenStart += 1
+	}
+}
+
+func (l *Lexer) stepLocationInfo(ch byte) {
+	if ch == '\n' {
+		l.currentLine += 1
+		l.currentChar = 1
+	} else {
+		l.currentChar += 1
+	}
+}
+
+func (l *Lexer) peek() byte {
+	return l.input[l.lookPosition]
+}
+
+func (l *Lexer) step() {
+	l.lookPosition += 1
 }
 
 func isNumber(ch byte) bool {
