@@ -20,32 +20,30 @@ func TestRawTemplates(t *testing.T) {
 	}
 }
 
-// Figure this out properly
-//func TestParserErrors(t *testing.T) {
-//	tests := []struct {
-//		input    string
-//		errorStr string
-//	}{
-//		{"{{ %}", "expected CLOSE_VAR, found EOF"},
-//		{"{{", "expected CLOSE_VAR, found EOF"},
-//		{"{{ foobar ", "expected CLOSE_VAR, found EOF"},
-//	}
-//
-//	for i, test := range tests {
-//		l := lexer.New(test.input)
-//		p := New(l)
-//		p.Parse()
-//
-//		if len(p.Errors) != 1 {
-//			fmt.Printf("Parser errors: %#v", p.Errors)
-//			t.Fatalf("(%d) Parser didn't find right # of errors. Found %d", i, len(p.Errors))
-//		}
-//
-//		if p.Errors[0] != test.errorStr {
-//			t.Fatalf("(%d) Wrong error. Wanted: \"%s\" Got: \"%s\"", i, test.errorStr, p.Errors[0])
-//		}
-//	}
-//}
+func TestParserErrors(t *testing.T) {
+	tests := []struct {
+		input    string
+		errorStr string
+	}{
+		{"{{", "(1:1) Expected CLOSE_VAR, found EOF"},
+		{"{{ foobar ", "(1:10) Expected CLOSE_VAR, found EOF"},
+		{"{{ %}", "(1:3) Expected CLOSE_VAR, found EOF"},
+	}
+
+	for i, test := range tests {
+		l := lexer.New(test.input)
+		p := New(l)
+		p.Parse()
+
+		if len(p.Errors) != 1 {
+			t.Fatalf("(%d) Parser didn't find right # of errors. Found %d\n%#v\n", i, len(p.Errors), p.Errors)
+		}
+
+		if p.Errors[0] != test.errorStr {
+			t.Fatalf("(%d) Wrong error. Wanted: \"%s\" Got: \"%s\"", i, test.errorStr, p.Errors[0])
+		}
+	}
+}
 
 func TestIdentifierExpression(t *testing.T) {
 	input := "{{ te }}"
@@ -569,15 +567,15 @@ func TestTagErrors(t *testing.T) {
 		errorStr string
 	}{
 		// Statement tags and parameter expectations
-		{`{% explode %}`, "Unknown tag 'explode'"},
-		{`{% assign %}`, "Error parsing tag 'assign': expected IDENT"},
-		{`{% assign var %}`, "Error parsing tag 'assign': expected ASSIGN"},
-		{`{% assign var = %}`, "Error parsing tag 'assign': expected EXPRESSION"},
-		{`{% assign var 10 %}`, "Error parsing nodes for tag 'assign': expected ASSIGN found NUMBER"},
+		{`{% explode %}`, "(1:4) Unknown tag 'explode'"},
+		{`{% assign %}`, "(1:4) Error parsing tag 'assign': expected IDENT"},
+		{`{% assign var %}`, "(1:11) Error parsing tag 'assign': expected ASSIGN"},
+		{`{% assign var = %}`, "(1:15) Error parsing tag 'assign': expected EXPRESSION"},
+		{`{% assign var 10 %}`, "(1:15) Error parsing nodes for tag 'assign': expected ASSIGN found NUMBER"},
 
-		{`{% capture %}`, "Error parsing tag 'capture': expected IDENT"},
-		{`{% capture %}{% end %}`, "Error parsing tag 'capture': expected IDENT"},
-		{`{% capture var %}`, "Error parsing tag 'capture': expected END found EOF"},
+		{`{% capture %}`, "(1:4) Error parsing tag 'capture': expected IDENT"},
+		{`{% capture %}{% end %}`, "(1:4) Error parsing tag 'capture': expected IDENT"},
+		{`{% capture var %}`, "(1:16) Error parsing tag 'capture': expected END found EOF"},
 	}
 
 	for _, test := range tests {

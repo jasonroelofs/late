@@ -114,20 +114,6 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
-func (p *Parser) currTokenIs(tokenType token.TokenType) bool {
-	return p.currToken.Type == tokenType
-}
-
-func (p *Parser) peekTokenIs(tokenTypes ...token.TokenType) bool {
-	for _, tt := range tokenTypes {
-		if p.peekToken.Type == tt {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (p *Parser) Parse() *ast.Template {
 	template := &ast.Template{}
 
@@ -407,7 +393,6 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.currToken.Type]
 	if prefix == nil {
-		p.noPrefixParseFnError(p.currToken.Type)
 		return nil
 	}
 
@@ -647,8 +632,18 @@ func (p *Parser) expectPeek(allowed ...token.TokenType) bool {
 	return true
 }
 
-func (p *Parser) noPrefixParseFnError(token token.TokenType) {
-	p.parserErrorf("No known prefix parse function for token type %s", token)
+func (p *Parser) currTokenIs(tokenType token.TokenType) bool {
+	return p.currToken.Type == tokenType
+}
+
+func (p *Parser) peekTokenIs(tokenTypes ...token.TokenType) bool {
+	for _, tt := range tokenTypes {
+		if p.peekToken.Type == tt {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (p *Parser) expectedTokenError(got token.TokenType, expected ...token.TokenType) {
@@ -657,11 +652,15 @@ func (p *Parser) expectedTokenError(got token.TokenType, expected ...token.Token
 		tokenNames = append(tokenNames, string(t))
 	}
 
-	msg := fmt.Sprintf("expected %s, found %s", strings.Join(tokenNames, " or "), got)
+	msg := fmt.Sprintf(tokenLoc(p.peekToken)+"Expected %s, found %s", strings.Join(tokenNames, " or "), got)
 	p.Errors = append(p.Errors, msg)
 }
 
 func (p *Parser) parserErrorf(message string, args ...interface{}) {
-	msg := fmt.Sprintf(message, args...)
+	msg := fmt.Sprintf(tokenLoc(p.currToken)+message, args...)
 	p.Errors = append(p.Errors, msg)
+}
+
+func tokenLoc(t token.Token) string {
+	return fmt.Sprintf("(%d:%d) ", t.Line, t.Char)
 }

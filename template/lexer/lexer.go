@@ -45,8 +45,7 @@ func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
 	if l.atEOF() {
-		tok.Type = token.EOF
-		return tok
+		return l.eofToken()
 	}
 
 	// With the assumption that the end of the previous token will include
@@ -76,6 +75,10 @@ func (l *Lexer) NextToken() token.Token {
 
 func (l *Lexer) parseNextCodeToken() (tok token.Token) {
 	l.skipWhitespace()
+
+	if l.atEOF() {
+		return l.eofToken()
+	}
 
 	switch {
 	case l.test("{%end%}"):
@@ -310,6 +313,14 @@ func (l *Lexer) readIdentifier() string {
 	}
 
 	return string(buffer)
+}
+
+func (l *Lexer) eofToken() token.Token {
+	return token.Token{
+		Type: token.EOF,
+		Line: l.currentLine,
+		Char: l.currentChar,
+	}
 }
 
 // Build a token out of the current single character
