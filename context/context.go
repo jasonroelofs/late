@@ -18,23 +18,22 @@ type Evaluator interface {
 	ClearInterrupt()
 }
 
-type Statement interface {
-	String() string
-}
-
 type Context struct {
 	RenderFunc func(string, *Context) string
 
 	evaluator    Evaluator
+	globalScope  *Scope
 	currentScope *Scope
 	reader       FileReader
 }
 
 func New(options ...func(*Context)) *Context {
 	ctx := &Context{
-		currentScope: NewScope(nil),
-		reader:       new(NullReader),
+		globalScope: NewScope(nil),
+		reader:      new(NullReader),
 	}
+
+	ctx.currentScope = ctx.globalScope
 
 	for _, opt := range options {
 		opt(ctx)
@@ -53,6 +52,9 @@ func (c *Context) Assign(assigns Assigns) {
 	}
 }
 
+/**
+ * Store a value under a given name for the current scope.
+ */
 func (c *Context) Set(name string, value interface{}) {
 	c.currentScope.Set(name, object.New(value))
 }
@@ -65,8 +67,15 @@ func (c *Context) Get(name string) object.Object {
 	return c.currentScope.Get(name)
 }
 
+/**
+ * Promoting a variable takes it out of the current scope
+ * and moves it up to live at the global scope. This then ensures
+ * that an include at any level of nesting is able to promote
+ * a variable to allow any template or partial in the current render
+ * to access that variable.
+ */
 func (c *Context) Promote(name string) {
-	c.currentScope.Promote(name)
+	c.globalScope.Set(name, c.currentScope.Get(name))
 }
 
 func (c *Context) PushScope() {

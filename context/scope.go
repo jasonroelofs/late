@@ -55,14 +55,3 @@ func (s *Scope) Get(name string) object.Object {
 
 	return obj
 }
-
-func (s *Scope) Promote(name string) {
-	// Doesn't make sense, but lets not error out.
-	// The variable is already promoted as far as it can go.
-	if s.Parent == nil {
-		return
-	}
-
-	// TODO: If this variable doesn't exist in current scope?
-	s.Parent.Set(name, s.Get(name))
-}

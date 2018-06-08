@@ -258,9 +258,9 @@ func (t *TestReader) Read(path string) string {
 
 func TestRender_Include(t *testing.T) {
 	tests := []struct {
-		input    string
-		body     string
-		expected string
+		input       string
+		partialBody string
+		expected    string
 	}{
 		// Partials are fully rendered
 		{`{% include "partial" %}`, `{{ "This is" }} from partial`, "This is from partial"},
@@ -282,12 +282,19 @@ func TestRender_Include(t *testing.T) {
 			`Hi from partial`,
 		},
 
+		// Deeply nested partials will still promote to the global scope
+		{
+			`{% assign depth = 0 %}{% include "partial" %}{{ from_partial }}`,
+			`{% if depth == 5 %}{% assign from_partial = "Hi from partial" %}{% promote from_partial %}{% else %}{% assign depth = depth + 1 %}{% include "partial" %}{% end %}`,
+			`Hi from partial`,
+		},
+
 		// TODO error cases
 	}
 
 	for i, test := range tests {
 		tpl := New(test.input)
-		reader := &TestReader{Body: test.body}
+		reader := &TestReader{Body: test.partialBody}
 		ctx := context.New(context.Reader(reader))
 		results := tpl.Render(ctx)
 
