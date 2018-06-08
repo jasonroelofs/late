@@ -115,7 +115,7 @@ func (e *Evaluator) eval(node ast.Node) object.Object {
 		return object.New(node.Value)
 
 	case *ast.BooleanLiteral:
-		return convertBoolean(node.Value)
+		return object.New(node.Value)
 
 	case *ast.StringLiteral:
 		return object.New(node.Value)
@@ -176,9 +176,9 @@ func (e *Evaluator) evalInfix(operator string, left, right object.Object) object
 	case left.Type() == object.TYPE_NUMBER && right.Type() == object.TYPE_NUMBER:
 		return e.evalNumberOperation(operator, left, right)
 	case operator == "==":
-		return convertBoolean(left.Value() == right.Value())
+		return object.New(left.Value() == right.Value())
 	case operator == "!=":
-		return convertBoolean(left.Value() != right.Value())
+		return object.New(left.Value() != right.Value())
 	default:
 		return object.NULL
 	}
@@ -198,17 +198,17 @@ func (e *Evaluator) evalNumberOperation(operator string, left, right object.Obje
 	case "/":
 		return object.New(leftVal / rightVal)
 	case ">":
-		return convertBoolean(leftVal > rightVal)
+		return object.New(leftVal > rightVal)
 	case "<":
-		return convertBoolean(leftVal < rightVal)
+		return object.New(leftVal < rightVal)
 	case ">=":
-		return convertBoolean(leftVal >= rightVal)
+		return object.New(leftVal >= rightVal)
 	case "<=":
-		return convertBoolean(leftVal <= rightVal)
+		return object.New(leftVal <= rightVal)
 	case "==":
-		return convertBoolean(leftVal == rightVal)
+		return object.New(leftVal == rightVal)
 	case "!=":
-		return convertBoolean(leftVal != rightVal)
+		return object.New(leftVal != rightVal)
 	default:
 		return object.NULL
 	}
@@ -299,12 +299,4 @@ func (e *Evaluator) evalArrayLiteral(node *ast.ArrayLiteral) object.Object {
 	}
 
 	return array
-}
-
-func convertBoolean(value bool) object.Object {
-	if value {
-		return object.TRUE
-	} else {
-		return object.FALSE
-	}
 }
